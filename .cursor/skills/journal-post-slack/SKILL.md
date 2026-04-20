@@ -44,6 +44,12 @@ head -n 40 reports/manager-report-2026-04-01-to-2026-04-20.md | \
   --channel C0123456789
 ```
 
+## Security notes
+
+- **`--channel`** must be a Slack **conversation ID** (e.g. `C0123456789`), not `#channel-name`.
+- **`--file`** must point to a path **inside this repository** (relative paths are resolved from the repo root). Large files are rejected; message body must fit Slack’s text limit (see script).
+- **Secrets:** token only via env / `.env` — see [`.cursor/rules/journaling-repo.mdc`](../../rules/journaling-repo.mdc).
+
 ## Shared helpers
 
-Scripts load tokens via [`.cursor/skills/_shared/script_utils.py`](../_shared/script_utils.py).
+Scripts load tokens via [`.cursor/skills/_shared/script_utils.py`](../_shared/script_utils.py). Repo root and safe paths: [`journaling_repo.py`](../_shared/journaling_repo.py), [`path_guard.py`](../_shared/path_guard.py).

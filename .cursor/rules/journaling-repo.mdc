@@ -20,6 +20,8 @@ alwaysApply: true
 | `.cursor/skills/journal-post-slack/` | Post message to Slack (`chat.postMessage`). |
 | `.cursor/agents/journaling-specialist.md` | Subagent: which skill to use and in what order. |
 | `.cursor/skills/_shared/script_utils.py` | Token / `.env` helpers for stdlib scripts. |
+| `.cursor/skills/_shared/journaling_repo.py` | Resolve repo root via `.cursor/rules/journaling-repo.mdc`. |
+| `.cursor/skills/_shared/path_guard.py` | Keep file reads/writes inside this repo; size limits on reads. |
 
 ## Entry schema (`entries/YYYY-MM-DD.md`)
 
@@ -51,6 +53,18 @@ alwaysApply: true
 - Keep frontmatter valid YAML; preserve user wording in Freeform.
 - **Secrets:** store Slack tokens in repo-root `.env` (see `.env.example`). Never commit `.env` or tokens.
 - **Token variable:** `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` name (see `journal-post-slack` skill).
+
+## Security and privacy (X-Team alignment)
+
+Cross-check changes against **`standards/rules/hardcoded-secrets.md`**: no API keys, tokens, or passwords in source, tests, or committed config — only env vars / `.env` (gitignored). Placeholders in `.env.example` are fine.
+
+Per **`standards/rules/sensitive-data-in-logs.md`**: scripts must not print request bodies, full Slack API responses, or token values. Status lines may name files or channel IDs only; avoid dumping user journal content to logs unless the user explicitly asked.
+
+Per **`standards/rules/sensitive-data-in-errors.md`**: on failure, exit with a short generic message — do not echo stack traces, raw HTTP bodies, or token substrings to stderr.
+
+**Path handling:** `--file` / `--freeform-file` / `--output` resolve **inside this repository** only (relative paths are anchored to the repo root). **SSRF:** Slack URL is fixed to `https://slack.com/api/chat.postMessage` (no user-controlled URLs).
+
+**Slack posting:** `--channel` must be an ID (`C…` / `G…` / `D…`), not a `#name`. Message length is capped to Slack’s `chat.postMessage` text limit.
 
 ## Skills and specialist (quick links)
 

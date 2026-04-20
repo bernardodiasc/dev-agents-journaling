@@ -8,17 +8,11 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _shared.journaling_repo import find_journaling_repo_root
+from _shared.path_guard import resolve_write_path_under_repo
+
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-
-
-def find_repo_root() -> Path:
-    here = Path(__file__).resolve()
-    for p in here.parents:
-        if (p / ".cursor" / "skills" / "journal-generate-manager-report").is_dir():
-            (p / "entries").mkdir(parents=True, exist_ok=True)
-            (p / "reports").mkdir(parents=True, exist_ok=True)
-            return p
-    sys.exit("ERROR: could not find journaling repo root.")
 
 
 def parse_sections(body: str) -> dict[str, str]:
@@ -101,7 +95,7 @@ def main() -> None:
     if d_from > d_to:
         sys.exit("ERROR: --from must be <= --to")
 
-    repo = find_repo_root()
+    repo = find_journaling_repo_root(Path(__file__))
     entries_dir = repo / "entries"
 
     chunks: list[tuple[date, dict[str, str], str]] = []
@@ -147,7 +141,11 @@ def main() -> None:
         summary_bullets.append("- See Highlights and Completed work below.")
 
     report_name = f"manager-report-{args.date_from}-to-{args.date_to}.md"
-    out_path = Path(args.output) if args.output else repo / "reports" / report_name
+    out_path = (
+        resolve_write_path_under_repo(repo, args.output)
+        if args.output
+        else repo / "reports" / report_name
+    )
 
     lines: list[str] = [
         f"# Manager update ({args.date_from} – {args.date_to})",

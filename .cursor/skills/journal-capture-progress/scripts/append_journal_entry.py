@@ -11,20 +11,14 @@ import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _shared.journaling_repo import find_journaling_repo_root
+from _shared.path_guard import read_text_limited, resolve_under_repo
+
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
-
-def find_repo_root() -> Path:
-    here = Path(__file__).resolve()
-    for p in here.parents:
-        if (p / ".cursor" / "skills" / "journal-capture-progress").is_dir():
-            (p / "entries").mkdir(parents=True, exist_ok=True)
-            (p / "reports").mkdir(parents=True, exist_ok=True)
-            return p
-    sys.exit(
-        "ERROR: could not find journaling repo root "
-        "(expected .cursor/skills/journal-capture-progress).",
-    )
+# Cap freeform file size (UTF-8 bytes) to avoid accidental huge reads.
+_MAX_FREEFORM_FILE_BYTES = 512_000
 
 
 def parse_simple_frontmatter(raw: str) -> tuple[dict[str, str | list[str]], str]:
@@ -170,12 +164,13 @@ def main() -> None:
     if not ISO_DATE.match(d):
         sys.exit("ERROR: --date must be YYYY-MM-DD")
 
-    repo = find_repo_root()
+    repo = find_journaling_repo_root(Path(__file__))
     path = repo / "entries" / f"{d}.md"
 
     freeform_text = args.freeform
     if args.freeform_file:
-        freeform_text = Path(args.freeform_file).read_text()
+        ff_path = resolve_under_repo(repo, args.freeform_file)
+        freeform_text = read_text_limited(ff_path, max_bytes=_MAX_FREEFORM_FILE_BYTES)
     if freeform_text is None:
         freeform_text = ""
 

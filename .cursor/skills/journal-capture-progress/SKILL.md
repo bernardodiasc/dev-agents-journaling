@@ -32,7 +32,7 @@ The agent may **edit `entries/YYYY-MM-DD.md` directly** using the same section h
 |------|---------|
 | `--date YYYY-MM-DD` | Entry date (default: today local date from script) |
 | `--freeform "..."` | Freeform paragraph |
-| `--freeform-file PATH` | Read freeform from file |
+| `--freeform-file PATH` | Read freeform from file (path must be **inside this repo**; relative paths resolve from repo root) |
 | `--win` | Repeatable win bullet |
 | `--blocker` | Repeatable blocker bullet |
 | `--next-step` | Repeatable next-step bullet |
