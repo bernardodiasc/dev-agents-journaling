@@ -20,8 +20,6 @@ _Snapshot from your journal (includes technical detail from captures)._
 *Next focus*
 
 - Optional: add weekly rollup
-- Run post_slack_message.py with real token when ready to verify end-to-end
-- Optionally trim legacy manager-report-* filenames in reports/ in favor of report-<audience>-*
 
 *Notes from captures*
 

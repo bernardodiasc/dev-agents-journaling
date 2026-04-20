@@ -8,6 +8,8 @@ _Share-out from the journal for this period._
 - Security hardening: path guards and Slack limits
 - Journaling toolkit shipped: capture → report → Slack pipeline
 - Install-specific Slack defaults in .env (channel + optional user ID)
+- Slack post verified end-to-end with production token
+- Integration issues from live post run identified and fixed
 
 *Heads-up / dependencies*
 
@@ -16,7 +18,6 @@ _Share-out from the journal for this period._
 *Coming up*
 
 - Optional: add weekly rollup
-- Run post_slack_message.py with real token when ready to verify end-to-end
 
 *Source entries*
 
