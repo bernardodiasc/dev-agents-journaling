@@ -46,3 +46,7 @@ In Cursor, use **`@journal-capture-progress`**, **`@journal-generate-manager-rep
 ## Secrets
 
 Keep tokens in `.env` (gitignored). See each skill’s `SKILL.md` for `--token-var` options.
+
+## Security
+
+Scripts follow the repo rule [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc): no hardcoded secrets, safe file paths under this repo for `--file` / `--output`, and Slack channel IDs (not `#names`). If your workspace includes the X-Team standards repo, cross-check `standards/rules/` (e.g. hardcoded secrets, sensitive data in logs/errors).

@@ -4,17 +4,42 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _shared.journaling_repo import find_journaling_repo_root
+from _shared.path_guard import MAX_READ_BYTES_FOR_SLACK_POST, read_text_limited, resolve_under_repo
 from _shared.script_utils import load_token, validate_token_env_var
 
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 DEFAULT_TOKEN_VAR = "JOURNALING_SLACK_BOT_TOKEN"
 HTTP_TIMEOUT_SECONDS = 15
+# https://api.slack.com/methods/chat.postMessage — text field size limit
+SLACK_TEXT_MAX_CHARS = 40_000
+_SLACK_CHANNEL_ID = re.compile(r"^[CGD][A-Za-z0-9]{8,}$")
+_SLACK_THREAD_TS = re.compile(r"^\d{8,20}\.\d{1,10}$")
+
+
+def _validate_channel_id(channel: str) -> None:
+    if not _SLACK_CHANNEL_ID.match(channel):
+        sys.exit(
+            "ERROR: --channel must be a Slack channel or conversation ID "
+            "(e.g. C0123456789), not a channel name.",
+        )
+
+
+def _validate_thread_ts(thread_ts: str | None) -> None:
+    if thread_ts is None:
+        return
+    if not _SLACK_THREAD_TS.match(thread_ts):
+        sys.exit(
+            "ERROR: --thread-ts must look like a Slack message timestamp "
+            "(e.g. 1711900000.000100).",
+        )
 
 
 def send_message(
@@ -40,18 +65,29 @@ def send_message(
 
     try:
         with urlopen(req, timeout=HTTP_TIMEOUT_SECONDS) as resp:
-            return json.loads(resp.read())
+            raw = resp.read()
     except (URLError, TimeoutError):
         sys.exit("ERROR: Slack API request failed (network or timeout).")
 
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        sys.exit("ERROR: Slack API returned a non-JSON response.")
 
-def read_message_text(args: argparse.Namespace) -> str:
+
+def read_message_text(repo_root: Path, args: argparse.Namespace) -> str:
     if args.message:
         return args.message
     if args.file:
-        return Path(args.file).read_text()
+        path = resolve_under_repo(repo_root, args.file)
+        return read_text_limited(path, max_bytes=MAX_READ_BYTES_FOR_SLACK_POST)
     if not sys.stdin.isatty():
-        return sys.stdin.read()
+        data = sys.stdin.read()
+        if len(data) > MAX_READ_BYTES_FOR_SLACK_POST:
+            sys.exit(
+                f"ERROR: stdin input exceeds max read size ({MAX_READ_BYTES_FOR_SLACK_POST} bytes).",
+            )
+        return data
     sys.exit("ERROR: provide a positional message, --file, or pipe stdin.")
 
 
@@ -92,9 +128,17 @@ def main() -> None:
     args = parser.parse_args()
 
     validate_token_env_var(args.token_var)
-    text = read_message_text(args)
+    repo = find_journaling_repo_root(Path(__file__))
+    _validate_channel_id(args.channel)
+    _validate_thread_ts(args.thread_ts)
+    text = read_message_text(repo, args)
     if not text.strip():
         sys.exit("ERROR: message is empty.")
+    if len(text) > SLACK_TEXT_MAX_CHARS:
+        sys.exit(
+            f"ERROR: message is {len(text)} characters; Slack allows at most "
+            f"{SLACK_TEXT_MAX_CHARS}. Post an excerpt or split into multiple messages.",
+        )
 
     token = load_token(args.token_var)
     result = send_message(token, text, args.channel, args.thread_ts)
