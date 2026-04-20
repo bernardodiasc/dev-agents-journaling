@@ -29,7 +29,7 @@ model: inherit
    After a job or session: distill logs or chat into structured bullets; run `append_journal_entry.py` or edit `entries/` per the rule file.
 
 2. **`journal-generate-manager-report`** — [`.cursor/skills/journal-generate-manager-report/SKILL.md`](../skills/journal-generate-manager-report/SKILL.md)  
-   On-demand manager update: run `generate_manager_report.py --from … --to …`.
+   Period reports: `generate_manager_report.py --from … --to …` with `--report-audience manager|self|team|qa` and optional `--format slack`. **Manager** = concise for leadership; **self** = full detail + optional `<@USER_ID>`; **team** / **qa** = colleague or validation lens. See [`.cursor/rules/journaling-repo.mdc`](../rules/journaling-repo.mdc) and [`.cursor/rules/journaling-slack-formatting.mdc`](../rules/journaling-slack-formatting.mdc).
 
 3. **`journal-post-slack`** — [`.cursor/skills/journal-post-slack/SKILL.md`](../skills/journal-post-slack/SKILL.md)  
    Send the report (or a short summary) to Slack; default channel from `JOURNALING_SLACK_CHANNEL_ID` in `.env`, or pass `--channel`.

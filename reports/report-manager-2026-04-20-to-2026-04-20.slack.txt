@@ -1,0 +1,10 @@
+*Leadership update · 2026-04-20–2026-04-20*
+
+Progress this period included: Scaffolded repo skills and specialist agent; Security hardening: path guards and Slack limits; Journaling toolkit shipped: capture → report → Slack pipeline; Install-specific Slack defaults in .env (channel + optional user ID).
+
+*Priorities ahead*
+
+- Optional: add weekly rollup
+- Run post_slack_message.py with real token when ready to verify end-to-end
+
+_Generated 2026-04-20_
