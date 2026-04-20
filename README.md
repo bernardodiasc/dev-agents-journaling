@@ -1,22 +1,35 @@
 # Journaling
 
-Local-first **progress capture**, **manager report** generation, and optional **Slack** posting — driven by Cursor skills and the **journaling specialist** subagent.
+Local-first **progress capture**, **period reports** (multiple audiences), and optional **Slack** posting — driven by Cursor skills and the **journaling specialist** subagent.
 
 ## Layout
 
 | Path | Purpose |
 |------|---------|
-| `entries/YYYY-MM-DD.md` | Daily hybrid entries (freeform + structured sections) |
-| `reports/manager-report-<from>-to-<to>.md` | Generated manager updates |
-| `.cursor/rules/journaling-repo.mdc` | Schema, architecture, editing conventions |
+| `entries/YYYY-MM-DD.md` | Daily hybrid entries (freeform + structured sections); captures can be **technical**. |
+| `reports/report-<audience>-<from>-to-<to>.md` | Generated reports (Markdown). |
+| `reports/report-<audience>-<from>-to-<to>.slack.txt` | Same report as Slack **mrkdwn** for posting. |
+| `.cursor/rules/journaling-repo.mdc` | Schema, report audiences, editing conventions |
 | `.cursor/agents/journaling-specialist.md` | Subagent: which skill to use and when |
 | `.cursor/skills/journal-capture-progress/` | Append or create daily entries |
-| `.cursor/skills/journal-generate-manager-report/` | Roll entries into a report |
+| `.cursor/skills/journal-generate-manager-report/` | Build reports from `entries/` |
 | `.cursor/skills/journal-post-slack/` | Post message or report file to Slack |
+
+## Report audiences
+
+Use `--report-audience` when generating reports:
+
+- **`manager`** — Short leadership summary: plain-language paragraph from **Wins** + **Priorities ahead**; no raw freeform dump.
+- **`self`** — Full detail including freeform (your technical notes); Slack can prepend `<@you>` via `JOURNALING_SLACK_USER_ID`.
+- **`team`** — Colleague-friendly: highlights, dependencies, coming up.
+- **`qa`** — QA / validation lens: deliverables, risks, suggested verification.
+
+See [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc) for the full table.
 
 ## Quick start
 
-1. Copy [`.env.example`](.env.example) to `.env` and fill in at least the **bot token** and **`JOURNALING_SLACK_CHANNEL_ID`** (default destination for posts). Optionally set **`JOURNALING_SLACK_USER_ID`** if you use `--prepend-user-mention`. Invite the bot to that channel and ensure the app has `chat:write` (see comments in `.env.example`).
+1. Copy [`.env.example`](.env.example) to `.env` and fill in at least the **bot token** and **`JOURNALING_SLACK_CHANNEL_ID`**. Set **`JOURNALING_SLACK_USER_ID`** if you want `@mentions` on **self** Slack reports or `post_slack_message.py --prepend-user-mention`. Invite the bot to the channel; app needs `chat:write`.
+
 2. Capture progress (from repo root):
 
    ```bash
@@ -25,27 +38,35 @@ Local-first **progress capture**, **manager report** generation, and optional **
      --win "Concrete win"
    ```
 
-3. Generate a manager report:
+3. Generate reports:
 
    ```bash
+   # Leadership / manager (default) — Markdown
    python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
      --from 2026-04-01 \
      --to 2026-04-20
+
+   # Slack file for your manager (concise mrkdwn)
+   python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
+     --from 2026-04-01 \
+     --to 2026-04-20 \
+     --format slack \
+     --report-audience manager
    ```
 
-4. Post to Slack (uses `JOURNALING_SLACK_CHANNEL_ID` from `.env`, or pass `--channel`):
+4. Post to Slack (see [`.cursor/rules/journaling-slack-formatting.mdc`](.cursor/rules/journaling-slack-formatting.mdc)):
 
    ```bash
    python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-     --file reports/manager-report-2026-04-01-to-2026-04-20.md
+     --file reports/report-manager-2026-04-01-to-2026-04-20.slack.txt
    ```
 
 In Cursor, use **`@journal-capture-progress`**, **`@journal-generate-manager-report`**, **`@journal-post-slack`**, or the **`journaling-specialist`** agent to chain these steps.
 
 ## Secrets and install config
 
-Keep **tokens** and **Slack IDs** in `.env` (gitignored): bot token, default channel ID, optional your user ID. Do not commit `.env`. See [`.env.example`](.env.example) for how to find channel and member IDs in Slack.
+Keep **tokens** and **Slack IDs** in `.env` (gitignored). Do not commit `.env`. See [`.env.example`](.env.example).
 
 ## Security
 
-Scripts follow the repo rule [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc): no hardcoded secrets, safe file paths under this repo for `--file` / `--output`, and Slack channel IDs (not `#names`). If your workspace includes the X-Team standards repo, cross-check `standards/rules/` (e.g. hardcoded secrets, sensitive data in logs/errors).
+Scripts follow [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc): no hardcoded secrets, safe paths for `--file` / `--output`, Slack channel IDs (not `#names`). If your workspace includes the X-Team standards repo, cross-check `standards/rules/` where relevant.

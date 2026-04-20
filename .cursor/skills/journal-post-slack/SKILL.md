@@ -9,6 +9,8 @@ description: >-
 
 Stdlib-only `chat.postMessage`. Configure **repo-root** `.env` from [`.env.example`](../../.env.example): bot token, optional default **`JOURNALING_SLACK_CHANNEL_ID`**, optional **`JOURNALING_SLACK_USER_ID`** (for `--prepend-user-mention`). Token vars: `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` name.
 
+**Message body:** use **Slack mrkdwn**, not GitHub Markdown. For manager reports, generate with `generate_manager_report.py --format slack` and post the `.slack.txt` file. Rules: [`.cursor/rules/journaling-slack-formatting.mdc`](../../rules/journaling-slack-formatting.mdc).
+
 ## Quick start
 
 **working_directory:** repository root of `journaling`.
@@ -34,17 +36,17 @@ python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
 ## Examples
 
 ```bash
-# Post a generated report (default channel from .env)
+# Post a Slack-formatted report (use report-<audience>-… from generate_manager_report)
 python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-  --file reports/manager-report-2026-04-01-to-2026-04-20.md
+  --file reports/report-manager-2026-04-01-to-2026-04-20.slack.txt
 
 # Override channel for one run
 python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
   "Hello" \
   --channel C0123456789
 
-# Pipe excerpt
-head -n 40 reports/manager-report-2026-04-01-to-2026-04-20.md | \
+# Pipe excerpt (Slack-formatted file)
+head -n 40 reports/report-manager-2026-04-01-to-2026-04-20.slack.txt | \
   python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py
 ```
 
