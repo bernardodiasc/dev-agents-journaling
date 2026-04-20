@@ -13,7 +13,7 @@ from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _shared.journaling_repo import find_journaling_repo_root
 from _shared.path_guard import MAX_READ_BYTES_FOR_SLACK_POST, read_text_limited, resolve_under_repo
-from _shared.script_utils import load_token, validate_token_env_var
+from _shared.script_utils import load_optional_install_config, load_token, validate_token_env_var
 
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 DEFAULT_TOKEN_VAR = "JOURNALING_SLACK_BOT_TOKEN"
@@ -21,7 +21,16 @@ HTTP_TIMEOUT_SECONDS = 15
 # https://api.slack.com/methods/chat.postMessage — text field size limit
 SLACK_TEXT_MAX_CHARS = 40_000
 _SLACK_CHANNEL_ID = re.compile(r"^[CGD][A-Za-z0-9]{8,}$")
+_SLACK_USER_ID = re.compile(r"^U[A-Za-z0-9]{8,}$")
 _SLACK_THREAD_TS = re.compile(r"^\d{8,20}\.\d{1,10}$")
+
+
+def _validate_user_id(user_id: str) -> None:
+    if not _SLACK_USER_ID.match(user_id):
+        sys.exit(
+            "ERROR: JOURNALING_SLACK_USER_ID must look like a Slack member ID "
+            "(e.g. U0123456789).",
+        )
 
 
 def _validate_channel_id(channel: str) -> None:
@@ -107,8 +116,13 @@ def main() -> None:
     )
     parser.add_argument(
         "--channel",
-        required=True,
-        help="Slack channel ID (required)",
+        default=None,
+        help="Slack channel ID (default: JOURNALING_SLACK_CHANNEL_ID from .env)",
+    )
+    parser.add_argument(
+        "--prepend-user-mention",
+        action="store_true",
+        help="Prepend <@USER_ID> using JOURNALING_SLACK_USER_ID from .env",
     )
     parser.add_argument(
         "--thread-ts",
@@ -129,9 +143,29 @@ def main() -> None:
 
     validate_token_env_var(args.token_var)
     repo = find_journaling_repo_root(Path(__file__))
-    _validate_channel_id(args.channel)
+    channel = args.channel or load_optional_install_config(
+        "JOURNALING_SLACK_CHANNEL_ID",
+        start=repo,
+    )
+    if not channel:
+        sys.exit(
+            "ERROR: pass --channel or set JOURNALING_SLACK_CHANNEL_ID in .env "
+            "(see .env.example).",
+        )
+    _validate_channel_id(channel)
+
+    user_id = load_optional_install_config("JOURNALING_SLACK_USER_ID", start=repo)
+    if args.prepend_user_mention:
+        if not user_id:
+            sys.exit(
+                "ERROR: --prepend-user-mention requires JOURNALING_SLACK_USER_ID in .env.",
+            )
+        _validate_user_id(user_id)
+
     _validate_thread_ts(args.thread_ts)
     text = read_message_text(repo, args)
+    if args.prepend_user_mention and user_id:
+        text = f"<@{user_id}>\n\n{text}"
     if not text.strip():
         sys.exit("ERROR: message is empty.")
     if len(text) > SLACK_TEXT_MAX_CHARS:
@@ -141,15 +175,15 @@ def main() -> None:
         )
 
     token = load_token(args.token_var)
-    result = send_message(token, text, args.channel, args.thread_ts)
+    result = send_message(token, text, channel, args.thread_ts)
 
     if result.get("ok"):
         ts = result.get("ts", "")
-        channel = result.get("channel", args.channel)
+        channel_out = result.get("channel", channel)
         if args.json:
-            print(json.dumps({"ok": True, "channel": channel, "ts": ts}))
+            print(json.dumps({"ok": True, "channel": channel_out, "ts": ts}))
         else:
-            print(f"Message sent successfully (channel={channel}, ts={ts})")
+            print(f"Message sent successfully (channel={channel_out}, ts={ts})")
     else:
         error = result.get("error", "unknown")
         print(f"ERROR: Slack API returned error: {error}", file=sys.stderr)

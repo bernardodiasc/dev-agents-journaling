@@ -22,11 +22,51 @@ def validate_token_env_var(var_name: str) -> str:
 def find_dotenv(start: Path | None = None) -> Path | None:
     """Search upward from ``start`` (or this file's directory) for a ``.env`` file."""
 
-    current = (start or Path(__file__).resolve()).parent
-    for parent in [current, *current.parents]:
+    if start is None:
+        anchor = Path(__file__).resolve().parent
+    else:
+        p = Path(start).resolve()
+        anchor = p if p.is_dir() else p.parent
+    for parent in [anchor, *anchor.parents]:
         candidate = parent / ".env"
         if candidate.is_file():
             return candidate
+    return None
+
+
+_INSTALL_CONFIG_KEYS = frozenset(
+    {
+        "JOURNALING_SLACK_CHANNEL_ID",
+        "JOURNALING_SLACK_USER_ID",
+    },
+)
+
+
+def load_optional_install_config(key: str, *, start: Path | None = None) -> str | None:
+    """Load a non-secret install config value (channel / user ID) from env or ``.env``.
+
+    Checks ``os.environ`` first, then the first ``.env`` found walking upward from
+    ``start`` (default: this file’s directory). Returns ``None`` if unset or missing file.
+    """
+
+    if key not in _INSTALL_CONFIG_KEYS:
+        raise ValueError(f"unsupported install config key: {key!r}")
+
+    v = os.environ.get(key, "").strip()
+    if v:
+        return v
+
+    env_path = find_dotenv(start)
+    if env_path is None:
+        return None
+
+    for raw_line in env_path.read_text().splitlines():
+        line = raw_line.strip()
+        if line.startswith("#") or "=" not in line:
+            continue
+        k, _, value = line.partition("=")
+        if k.strip() == key and (val := value.strip().strip("'\"")):
+            return val
     return None
 
 

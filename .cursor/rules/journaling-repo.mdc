@@ -51,8 +51,11 @@ alwaysApply: true
 
 - **Do not** delete or overwrite a full-day entry without explicit user intent; prefer **append** via `append_journal_entry.py` or the capture skill workflow.
 - Keep frontmatter valid YAML; preserve user wording in Freeform.
-- **Secrets:** store Slack tokens in repo-root `.env` (see `.env.example`). Never commit `.env` or tokens.
-- **Token variable:** `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` name (see `journal-post-slack` skill).
+- **Secrets and install config:** store in repo-root `.env` (see `.env.example`). Never commit `.env`.
+  - **Token:** `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` name (see `journal-post-slack` skill).
+  - **Default channel:** `JOURNALING_SLACK_CHANNEL_ID` — used when `post_slack_message.py` is run without `--channel`.
+  - **Optional user:** `JOURNALING_SLACK_USER_ID` — your member ID (`U…`); used only with `--prepend-user-mention`.
+  - Before posting: invite the bot to the channel; app needs `chat:write` (see `.env.example`).
 
 ## Security and privacy (X-Team alignment)
 

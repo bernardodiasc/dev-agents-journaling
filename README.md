@@ -16,7 +16,7 @@ Local-first **progress capture**, **manager report** generation, and optional **
 
 ## Quick start
 
-1. Copy [`.env.example`](.env.example) to `.env` and set a Slack bot token if you use `journal-post-slack`.
+1. Copy [`.env.example`](.env.example) to `.env` and fill in at least the **bot token** and **`JOURNALING_SLACK_CHANNEL_ID`** (default destination for posts). Optionally set **`JOURNALING_SLACK_USER_ID`** if you use `--prepend-user-mention`. Invite the bot to that channel and ensure the app has `chat:write` (see comments in `.env.example`).
 2. Capture progress (from repo root):
 
    ```bash
@@ -33,19 +33,18 @@ Local-first **progress capture**, **manager report** generation, and optional **
      --to 2026-04-20
    ```
 
-4. Post to Slack (requires channel ID):
+4. Post to Slack (uses `JOURNALING_SLACK_CHANNEL_ID` from `.env`, or pass `--channel`):
 
    ```bash
    python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-     --file reports/manager-report-2026-04-01-to-2026-04-20.md \
-     --channel YOUR_CHANNEL_ID
+     --file reports/manager-report-2026-04-01-to-2026-04-20.md
    ```
 
 In Cursor, use **`@journal-capture-progress`**, **`@journal-generate-manager-report`**, **`@journal-post-slack`**, or the **`journaling-specialist`** agent to chain these steps.
 
-## Secrets
+## Secrets and install config
 
-Keep tokens in `.env` (gitignored). See each skill’s `SKILL.md` for `--token-var` options.
+Keep **tokens** and **Slack IDs** in `.env` (gitignored): bot token, default channel ID, optional your user ID. Do not commit `.env`. See [`.env.example`](.env.example) for how to find channel and member IDs in Slack.
 
 ## Security
 

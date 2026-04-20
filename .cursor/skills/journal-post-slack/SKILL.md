@@ -7,16 +7,16 @@ description: >-
 
 # Post to Slack (journaling)
 
-Stdlib-only `chat.postMessage`. Token resolution matches team convention: set `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` variable in repo-root `.env` (see `.env.example`).
+Stdlib-only `chat.postMessage`. Configure **repo-root** `.env` from [`.env.example`](../../.env.example): bot token, optional default **`JOURNALING_SLACK_CHANNEL_ID`**, optional **`JOURNALING_SLACK_USER_ID`** (for `--prepend-user-mention`). Token vars: `JOURNALING_SLACK_BOT_TOKEN` or any `SLACK_*` name.
 
 ## Quick start
 
 **working_directory:** repository root of `journaling`.
 
 ```bash
+# With JOURNALING_SLACK_CHANNEL_ID set in .env — omit --channel
 python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-  "Weekly update: see thread" \
-  --channel YOUR_CHANNEL_ID
+  "Weekly update: see thread"
 ```
 
 ## Options
@@ -25,7 +25,8 @@ python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
 |------|---------|
 | `message` (positional) | Message text (optional if `--file` or stdin) |
 | `--file`, `-f` | Read body from file (e.g. generated report) |
-| `--channel` | **Required.** Slack channel ID |
+| `--channel` | Slack channel ID (optional if `JOURNALING_SLACK_CHANNEL_ID` is in `.env`) |
+| `--prepend-user-mention` | Prepend `<@USER_ID>` using `JOURNALING_SLACK_USER_ID` from `.env` |
 | `--thread-ts` | Reply in thread |
 | `--token-var` | Env var name (default: `JOURNALING_SLACK_BOT_TOKEN`) |
 | `--json` | One JSON line: `ok`, `channel`, `ts` |
@@ -33,15 +34,18 @@ python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
 ## Examples
 
 ```bash
-# Post a generated report
+# Post a generated report (default channel from .env)
 python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-  --file reports/manager-report-2026-04-01-to-2026-04-20.md \
+  --file reports/manager-report-2026-04-01-to-2026-04-20.md
+
+# Override channel for one run
+python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
+  "Hello" \
   --channel C0123456789
 
 # Pipe excerpt
 head -n 40 reports/manager-report-2026-04-01-to-2026-04-20.md | \
-  python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
-  --channel C0123456789
+  python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py
 ```
 
 ## Security notes

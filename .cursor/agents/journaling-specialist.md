@@ -32,7 +32,7 @@ model: inherit
    On-demand manager update: run `generate_manager_report.py --from … --to …`.
 
 3. **`journal-post-slack`** — [`.cursor/skills/journal-post-slack/SKILL.md`](../skills/journal-post-slack/SKILL.md)  
-   Send the report (or a short summary) to Slack; `--channel` is required.
+   Send the report (or a short summary) to Slack; default channel from `JOURNALING_SLACK_CHANNEL_ID` in `.env`, or pass `--channel`.
 
 ---
 
