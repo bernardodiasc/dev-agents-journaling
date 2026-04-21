@@ -2,11 +2,7 @@
 .DS_Store
 __pycache__/
 *.py[cod]
-context/*
-!context/.gitkeep
-entries/*
-!entries/.gitkeep
-plans/*
-!plans/.gitkeep
-reports/*
-!reports/.gitkeep
+context/
+entries/
+plans/
+reports/
