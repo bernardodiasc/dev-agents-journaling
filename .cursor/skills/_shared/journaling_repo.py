@@ -14,8 +14,8 @@ def find_journaling_repo_root(start: Path | None = None) -> Path:
     for p in [here, *here.parents]:
         if (p / marker).is_file():
             root = p.resolve()
-            (root / "entries").mkdir(parents=True, exist_ok=True)
-            (root / "reports").mkdir(parents=True, exist_ok=True)
+            for d in ("entries", "reports", "plans", "context"):
+                (root / d).mkdir(parents=True, exist_ok=True)
             return root
     sys.exit(
         "ERROR: journaling repo root not found "

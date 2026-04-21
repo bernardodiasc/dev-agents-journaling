@@ -1,14 +1,26 @@
 ---
 name: journal-capture-progress
 description: >-
-  Capture daily progress into journaling entries/YYYY-MM-DD.md from chat context,
-  pasted logs, or @ file paths. Use after a job/session or when consolidating wins,
-  blockers, and next steps into the repo.
+  Capture daily progress into journaling entries/YYYY-MM-DD.md. Ask the user about
+  style (overview / detailed / technical), which sections to fill, and any context
+  links to attach before running the script.
 ---
 
 # Capture progress into the journaling repo
 
 Turn raw context (freeform narrative, terminal output pasted in chat, or file references) into a structured daily file under `entries/`. Follow schema in [`.cursor/rules/journaling-repo.mdc`](../../rules/journaling-repo.mdc).
+
+## Ask first — do not assume defaults
+
+Before appending, the agent should confirm at least the following (see [`journaling-interaction.mdc`](../../rules/journaling-interaction.mdc)):
+
+1. **Style** — overview (1–3 sentences), detailed (paragraph + bullets), or technical (long-form with code / command output)?
+2. **Sections** — wins, blockers, next steps, metrics, freeform, or a subset?
+3. **Context to link** — tickets (`AIAUT-…`), PRs, commits, fetched `context/…` files — include any? If there's a relevant file in `context/`, suggest it.
+4. **Date** — today (default) or a specific `--date YYYY-MM-DD`?
+5. **Append or overwrite** — if an entry already exists for the date, always prefer append under `### Capture <ISO8601>` in `## Freeform`.
+
+Good captures are shaped by the user, not by a default template.
 
 ## Quick start
 
@@ -41,6 +53,18 @@ The agent may **edit `entries/YYYY-MM-DD.md` directly** using the same section h
 | `--audience VALUE` | e.g. `manager_update` |
 
 ## Examples
+
+Chat example — overview style:
+
+> **You:** capture today's progress
+>
+> **Agent:** (asks-first) "Quick overview or a detailed technical log? Any wins/blockers/next steps, or just freeform? Anything from `context/` to reference?"
+>
+> **You:** overview, just wins and next steps, reference context/jira-aiaut-436-….txt
+>
+> **Agent:** drafts bullets from chat so far, confirms, then runs `append_journal_entry.py --win … --next-step … --freeform "See context/jira-aiaut-436-….txt for background"`.
+
+Script examples:
 
 ```bash
 python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py \

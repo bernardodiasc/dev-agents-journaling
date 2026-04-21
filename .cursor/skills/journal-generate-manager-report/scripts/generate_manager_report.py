@@ -538,34 +538,52 @@ def default_output_basename(date_from: str, date_to: str, audience: str, output_
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate period reports from entries/ (multiple audiences / tones).",
+        description=(
+            "Generate period reports from entries/. By default writes all audiences "
+            "(manager, self, team, qa) as Markdown so they stay in sync. Use "
+            "--report-audience to write just one. Slack .slack.txt is produced only at "
+            "post-time by journal-post-slack."
+        ),
     )
     parser.add_argument("--from", dest="date_from", required=True, help="Start date YYYY-MM-DD (inclusive)")
     parser.add_argument("--to", dest="date_to", required=True, help="End date YYYY-MM-DD (inclusive)")
     parser.add_argument(
         "--output",
         default=None,
-        help="Output path (default: reports/report-<audience>-<from>-to-<to>.md|.slack.txt)",
+        help=(
+            "Override output path (single-audience only; requires --report-audience "
+            "and is incompatible with --all-audiences)."
+        ),
     )
     parser.add_argument(
         "--format",
         choices=("markdown", "slack"),
         default="markdown",
-        help="markdown for local files; slack for Slack mrkdwn (post with journal-post-slack)",
+        help=(
+            "Output format for the generated file(s). Default: markdown. "
+            "The 'slack' option is retained for advanced use; prefer journal-post-slack "
+            "which renders the sibling .slack.txt at post time."
+        ),
     )
-    parser.add_argument(
+    audience_group = parser.add_mutually_exclusive_group()
+    audience_group.add_argument(
         "--report-audience",
         choices=REPORT_AUDIENCES,
-        default="manager",
-        help=(
-            "manager=concise leadership summary (no technical dump); "
-            "self=personal/reflection; team=colleagues; qa=validation & risk lens"
-        ),
+        default=None,
+        help="Single audience (manager | self | team | qa). Omit to write all audiences.",
+    )
+    audience_group.add_argument(
+        "--all-audiences",
+        action="store_true",
+        help="Write all audiences together (default when --report-audience is omitted).",
     )
     parser.add_argument(
         "--slack-user-id",
         default=None,
-        help="For --report-audience self + --format slack: prepend <@ID> (else uses JOURNALING_SLACK_USER_ID from .env)",
+        help=(
+            "For --report-audience self + --format slack: prepend <@ID> "
+            "(else uses JOURNALING_SLACK_USER_ID from .env)."
+        ),
     )
     args = parser.parse_args()
 
@@ -577,32 +595,46 @@ def main() -> None:
     if d_from > d_to:
         sys.exit("ERROR: --from must be <= --to")
 
+    # Default: all audiences in one go (keeps .md set in sync).
+    write_all = args.all_audiences or args.report_audience is None
+    if args.output and write_all:
+        sys.exit(
+            "ERROR: --output requires --report-audience (single-audience writes only).",
+        )
+
     repo = find_journaling_repo_root(Path(__file__))
     data = aggregate_report(repo, args.date_from, args.date_to)
 
-    slack_uid: str | None = None
-    if args.report_audience == "self" and args.format == "slack":
-        slack_uid = args.slack_user_id or load_optional_install_config(
-            "JOURNALING_SLACK_USER_ID",
-            start=repo,
+    def _resolve_uid(audience: str) -> str | None:
+        if audience == "self" and args.format == "slack":
+            uid = args.slack_user_id or load_optional_install_config(
+                "JOURNALING_SLACK_USER_ID", start=repo,
+            )
+            return uid
+        if args.slack_user_id:
+            uid = args.slack_user_id.strip()
+            if uid and not _SLACK_USER_ID.match(uid):
+                sys.exit("ERROR: --slack-user-id must look like U0123456789.")
+            return uid
+        return None
+
+    audiences = REPORT_AUDIENCES if write_all else (args.report_audience,)
+    written: list[Path] = []
+    for audience in audiences:
+        body = render_report(data, args.format, audience, _resolve_uid(audience))
+        default_name = default_output_basename(
+            args.date_from, args.date_to, audience, args.format,
         )
-    elif args.slack_user_id:
-        slack_uid = args.slack_user_id.strip()
-        if slack_uid and not _SLACK_USER_ID.match(slack_uid):
-            sys.exit("ERROR: --slack-user-id must look like U0123456789.")
+        if args.output and not write_all:
+            out_path = resolve_write_path_under_repo(repo, args.output)
+        else:
+            out_path = repo / "reports" / default_name
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(body)
+        written.append(out_path)
 
-    body = render_report(data, args.format, args.report_audience, slack_uid)
-    default_name = default_output_basename(args.date_from, args.date_to, args.report_audience, args.format)
-
-    out_path = (
-        resolve_write_path_under_repo(repo, args.output)
-        if args.output
-        else repo / "reports" / default_name
-    )
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(body)
-    print(f"Wrote {out_path.relative_to(repo)}")
+    for p in written:
+        print(f"Wrote {p.relative_to(repo)}")
 
 
 if __name__ == "__main__":
