@@ -3,6 +3,10 @@
 __pycache__/
 *.py[cod]
 context/*
+!context/.gitkeep
 entries/*
+!entries/.gitkeep
 plans/*
+!plans/.gitkeep
 reports/*
+!reports/.gitkeep
