@@ -1,5 +1,5 @@
 ---
-name: journal-generate-manager-report
+name: journal-generate-reports
 description: >-
   Generate period reports from entries/ for all audiences (manager, self, team, qa)
   as Markdown — kept in sync. Slack sibling .slack.txt is produced only at post time.
@@ -33,7 +33,7 @@ Before running, confirm with the user (see [`journaling-interaction.mdc`](../../
 
 ```bash
 # Default: all audiences, Markdown (kept in sync)
-python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
+python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.py \
   --from 2026-04-01 --to 2026-04-20
 # → reports/report-manager-2026-04-01-to-2026-04-20.md
 # → reports/report-self-2026-04-01-to-2026-04-20.md
@@ -56,11 +56,11 @@ python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_
 
 ```bash
 # Generate all four reports for last two weeks
-python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
+python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.py \
   --from 2026-04-07 --to 2026-04-20
 
 # (advanced) just the QA audience, custom output path
-python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
+python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.py \
   --from 2026-04-18 --to 2026-04-20 \
   --report-audience qa --output reports/qa-preview.md
 ```

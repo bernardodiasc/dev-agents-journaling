@@ -41,7 +41,7 @@ Load the skill's `SKILL.md` when the task matches.
 
 5. **[`journal-daily-plan`](../skills/journal-daily-plan/SKILL.md)** — Two-phase: (1) catch-up from recent entries + any queued context, (2) save `plans/plan-YYYY-MM-DD.md` *only after user confirms*.
 
-6. **[`journal-generate-manager-report`](../skills/journal-generate-manager-report/SKILL.md)** — Generate **all four** audience `.md` reports in sync (`manager`, `self`, `team`, `qa`). Ask only for the date range.
+6. **[`journal-generate-reports`](../skills/journal-generate-reports/SKILL.md)** — Generate **all four** audience `.md` reports in sync (`manager`, `self`, `team`, `qa`). Ask only for the date range.
 
 7. **[`journal-render-slack`](../skills/journal-render-slack/SKILL.md)** — Convert a `.md` to its `.slack.txt` sibling. You rarely call this directly — `journal-post-slack` does it at post time.
 
