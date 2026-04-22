@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _shared.journaling_repo import find_journaling_repo_root
-from _shared.path_guard import resolve_write_path_under_repo
+from _shared.path_guard import resolve_write_path_under_repo, atomic_write_text
 from _shared.script_utils import load_optional_install_config
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -629,8 +629,7 @@ def main() -> None:
             out_path = resolve_write_path_under_repo(repo, args.output)
         else:
             out_path = repo / "reports" / default_name
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(body)
+        atomic_write_text(out_path, body)
         written.append(out_path)
 
     for p in written:

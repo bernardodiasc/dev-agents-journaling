@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _shared.journaling_repo import find_journaling_repo_root
-from _shared.path_guard import read_text_limited, resolve_under_repo
+from _shared.path_guard import read_text_limited, resolve_under_repo, atomic_write_text
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -228,7 +228,7 @@ def main() -> None:
         audience_out = str(meta["audience"]) if meta.get("audience") else None
         fm = ensure_frontmatter(entry_date, tags_out, audience_out)
         out = fm + render_sections(sections)
-        path.write_text(out)
+        atomic_write_text(path, out)
     else:
         sections: dict[str, str] = {}
         if freeform_text.strip():

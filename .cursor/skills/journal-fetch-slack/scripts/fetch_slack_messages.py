@@ -13,7 +13,7 @@ from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _shared.journaling_repo import find_journaling_repo_root
-from _shared.path_guard import resolve_write_path_under_repo
+from _shared.path_guard import resolve_write_path_under_repo, atomic_write_text
 from _shared.script_utils import (
     list_channel_aliases,
     load_optional_install_config,
@@ -220,8 +220,7 @@ def main() -> None:
 
     if save_path_str:
         out_path = resolve_write_path_under_repo(repo, save_path_str)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(output, encoding="utf-8")
+        atomic_write_text(out_path, output)
         if args.json:
             print(json.dumps({"ok": True, "count": len(messages), "path": str(out_path)}))
         else:

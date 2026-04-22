@@ -22,6 +22,7 @@ from _shared.path_guard import (
     read_text_limited,
     resolve_under_repo,
     resolve_write_path_under_repo,
+    atomic_write_text,
 )
 from _shared.script_utils import (
     list_channel_aliases,
@@ -131,8 +132,7 @@ def _resolve_body(repo_root: Path, args: argparse.Namespace) -> tuple[str, Path 
 
 
 def _write_sibling_receipt(sibling: Path, text: str) -> None:
-    sibling.parent.mkdir(parents=True, exist_ok=True)
-    sibling.write_text(text, encoding="utf-8")
+    atomic_write_text(sibling, text)
 
 
 def _resolve_channel(args: argparse.Namespace, repo: Path) -> str:

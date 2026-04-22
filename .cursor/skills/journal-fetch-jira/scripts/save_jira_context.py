@@ -20,6 +20,7 @@ from _shared.path_guard import (
     read_text_limited,
     resolve_under_repo,
     resolve_write_path_under_repo,
+    atomic_write_text,
 )
 from _shared.script_utils import load_optional_install_config
 
@@ -184,8 +185,7 @@ def main() -> None:
         target = resolve_write_path_under_repo(
             repo, f"context/jira-{slug}-{today}.txt",
         )
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(body, encoding="utf-8")
+    atomic_write_text(target, body)
     print(f"Wrote {target.relative_to(repo)}")
 
 
