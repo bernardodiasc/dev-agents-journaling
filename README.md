@@ -27,7 +27,7 @@ The agent **asks before assuming**: style of capture, source of context, date ra
 | [`journal-fetch-slack`](.cursor/skills/journal-fetch-slack/) | Pull channel history via `conversations.history` (default, alias, or explicit ID). |
 | [`journal-fetch-jira`](.cursor/skills/journal-fetch-jira/) | Save pasted Atlassian URLs (ticket / epic / project / note) with optional notes. No API. |
 | [`journal-daily-plan`](.cursor/skills/journal-daily-plan/) | Two-phase: catch-up → confirm → save `plans/plan-YYYY-MM-DD.md`. |
-| [`journal-generate-manager-report`](.cursor/skills/journal-generate-manager-report/) | Generate all four audience reports in sync. |
+| [`journal-generate-reports`](.cursor/skills/journal-generate-reports/) | Generate all four audience reports in sync. |
 | [`journal-render-slack`](.cursor/skills/journal-render-slack/) | Convert a `.md` to its `.slack.txt` sibling (called at post time). |
 | [`journal-post-slack`](.cursor/skills/journal-post-slack/) | Post file or text to Slack. For `.md`, renders the `.slack.txt` receipt first. |
 
@@ -122,7 +122,7 @@ python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
 > **Agent:** runs:
 
 ```bash
-python3 .cursor/skills/journal-generate-manager-report/scripts/generate_manager_report.py \
+python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.py \
   --from 2026-04-07 --to 2026-04-20
 ```
 
