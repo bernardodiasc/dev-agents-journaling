@@ -8,17 +8,20 @@ import sys
 from pathlib import Path
 
 # Slack token env vars: SLACK_* (team convention) or journaling-specific name.
-_TOKEN_VAR_PATTERN = re.compile(r"^(SLACK_[A-Z0-9_]{1,120}|JOURNALING_SLACK_BOT_TOKEN)$")
+# Max 256 chars total to prevent ReDoS attacks
+_TOKEN_VAR_PATTERN = re.compile(r"^(SLACK_[A-Z0-9_]{1,120}|JOURNALING_SLACK_BOT_TOKEN)$", re.VERBOSE)
 
 # Any env var name we will read as install config. Token names are excluded.
+# Max 256 chars total to prevent ReDoS attacks
 _INSTALL_CONFIG_PATTERN = re.compile(
-    r"^JOURNALING_(?:SLACK_CHANNEL_ID(?:_[A-Z0-9_]{1,120})?|SLACK_USER_ID|JIRA_BASE_URL)$"
+    r"^JOURNALING_(?:SLACK_CHANNEL_ID(?:_[A-Z0-9_]{1,120})?|SLACK_USER_ID|JIRA_BASE_URL)$", re.VERBOSE
 )
 
 # Prefix for named Slack channel aliases (e.g. JOURNALING_SLACK_CHANNEL_ID_TEAM).
 _NAMED_CHANNEL_PREFIX = "JOURNALING_SLACK_CHANNEL_ID_"
 
-_CHANNEL_ID_RE = re.compile(r"^[CGD][A-Za-z0-9]{8,}$")
+# Slack channel IDs are 9-11 characters long; cap at 20 to prevent ReDoS
+_CHANNEL_ID_RE = re.compile(r"^[CGD][A-Za-z0-9]{8,19}$")
 
 
 def validate_token_env_var(var_name: str) -> str:
@@ -76,6 +79,19 @@ def load_optional_install_config(key: str, *, start: Path | None = None) -> str 
     env_path = find_dotenv(start)
     if env_path is None:
         return None
+
+    # Warn if .env file has overly permissive permissions (world-readable)
+    try:
+        stat_info = env_path.stat()
+        if stat_info.st_mode & 0o004:  # Check if world-readable
+            import warnings
+            warnings.warn(
+                f"WARNING: .env file {env_path} is world-readable; "
+                "consider restricting permissions (chmod 600).",
+                stacklevel=2,
+            )
+    except (OSError, AttributeError):
+        pass
 
     for k, value in _iter_dotenv_pairs(env_path):
         if k == key and value:
@@ -147,14 +163,32 @@ def load_token(var_name: str) -> str:
     validate_token_env_var(var_name)
     v = os.environ.get(var_name, "").strip()
     if v:
+        # Validate token is not suspiciously short
+        if len(v) < 10:
+            sys.exit(f"ERROR: {var_name} value is suspiciously short (< 10 chars); check .env or env var.")
         return v
 
     env_path = find_dotenv()
     if env_path is None:
         sys.exit("ERROR: .env file not found in any parent directory (or set env var).")
 
+    # Warn about world-readable .env file (contains secrets)
+    try:
+        stat_info = env_path.stat()
+        if stat_info.st_mode & 0o004:  # Check if world-readable
+            import warnings
+            warnings.warn(
+                f"WARNING: .env file {env_path} is world-readable and contains secrets; "
+                "restrict permissions immediately (chmod 600).",
+                stacklevel=2,
+            )
+    except (OSError, AttributeError):
+        pass
+
     for k, value in _iter_dotenv_pairs(env_path):
         if k == var_name and value:
+            if len(value) < 10:
+                sys.exit(f"ERROR: {var_name} value is suspiciously short (< 10 chars); check .env.")
             return value
 
     sys.exit(

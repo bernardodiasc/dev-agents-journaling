@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _shared.journaling_repo import find_journaling_repo_root
-from _shared.path_guard import read_text_limited, resolve_under_repo, resolve_write_path_under_repo
+from _shared.path_guard import read_text_limited, resolve_under_repo, resolve_write_path_under_repo, atomic_write_text
 
 _SECTION_RE = re.compile(r"^## (.+)$", re.MULTILINE)
 _BULLET_RE = re.compile(r"^[-*] (.+)$", re.MULTILINE)
@@ -163,13 +163,11 @@ def main() -> None:
 
     if args.save:
         md_path = resolve_write_path_under_repo(repo, f"plans/plan-{today}.md")
-        md_path.parent.mkdir(parents=True, exist_ok=True)
-        md_path.write_text(rendered, encoding="utf-8")
+        atomic_write_text(md_path, rendered)
         print(f"Wrote {md_path.relative_to(repo)}")
     elif args.output:
         out_path = resolve_write_path_under_repo(repo, args.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(rendered, encoding="utf-8")
+        atomic_write_text(out_path, rendered)
         print(f"Wrote {out_path.relative_to(repo)}")
     else:
         print(rendered)

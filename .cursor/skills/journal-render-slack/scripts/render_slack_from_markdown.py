@@ -28,6 +28,7 @@ from _shared.path_guard import (
     read_text_limited,
     resolve_under_repo,
     resolve_write_path_under_repo,
+    atomic_write_text,
 )
 
 _HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
@@ -107,8 +108,7 @@ def main() -> None:
         if args.output
         else _default_sibling(src)
     )
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(slack_text, encoding="utf-8")
+    atomic_write_text(target, slack_text)
     print(f"Rendered {src.relative_to(repo)} → {target.relative_to(repo)}")
 
 
