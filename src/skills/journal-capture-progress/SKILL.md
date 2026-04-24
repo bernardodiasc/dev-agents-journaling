@@ -8,11 +8,11 @@ description: >-
 
 # Capture progress into the journaling repo
 
-Turn raw context (freeform narrative, terminal output pasted in chat, or file references) into a structured daily file under `entries/`. Follow schema in [`.cursor/rules/journaling-repo.mdc`](../../rules/journaling-repo.mdc).
+Turn raw context (freeform narrative, terminal output pasted in chat, or file references) into a structured daily file under `entries/`. Follow schema in [`src/rules/journaling-repo.md`](../../rules/journaling-repo.md).
 
 ## Ask first — do not assume defaults
 
-Before appending, the agent should confirm at least the following (see [`journaling-interaction.mdc`](../../rules/journaling-interaction.mdc)):
+Before appending, the agent should confirm at least the following (see [`journaling-interaction.md`](../../rules/journaling-interaction.md)):
 
 1. **Style** — overview (1–3 sentences), detailed (paragraph + bullets), or technical (long-form with code / command output)?
 2. **Sections** — wins, blockers, next steps, metrics, freeform, or a subset?
@@ -27,7 +27,7 @@ Good captures are shaped by the user, not by a default template.
 **working_directory:** repository root of `journaling` (stdlib only — no extra packages).
 
 ```bash
-python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py \
+python3 src/skills/journal-capture-progress/scripts/append_journal_entry.py \
   --freeform "Shipped X; fixed Y." \
   --win "Merged PR for X" \
   --blocker "Waiting on API access" \
@@ -67,12 +67,12 @@ Chat example — overview style:
 Script examples:
 
 ```bash
-python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py \
+python3 src/skills/journal-capture-progress/scripts/append_journal_entry.py \
   --date 2026-04-20 \
   --freeform "Debugged Slack formatter; added tests." \
   --tag work --tag benji
 
-python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py \
+python3 src/skills/journal-capture-progress/scripts/append_journal_entry.py \
   --freeform-file /tmp/session-log.txt \
   --win "CI green on main"
 ```

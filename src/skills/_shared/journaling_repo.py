@@ -1,4 +1,4 @@
-"""Locate the journaling repository root (directory containing ``journaling-repo.mdc``)."""
+"""Locate the journaling repository root (directory containing ``src/rules/journaling-repo.md``)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ def find_journaling_repo_root(start: Path | None = None) -> Path:
 
     anchor = start if start is not None else Path(__file__)
     here = anchor.resolve()
-    marker = Path(".cursor") / "rules" / "journaling-repo.mdc"
+    marker = Path("src") / "rules" / "journaling-repo.md"
     for p in [here, *here.parents]:
         if (p / marker).is_file():
             root = p.resolve()
@@ -19,5 +19,5 @@ def find_journaling_repo_root(start: Path | None = None) -> Path:
             return root
     sys.exit(
         "ERROR: journaling repo root not found "
-        "(expected .cursor/rules/journaling-repo.mdc in a parent directory).",
+        "(expected src/rules/journaling-repo.md in a parent directory).",
     )

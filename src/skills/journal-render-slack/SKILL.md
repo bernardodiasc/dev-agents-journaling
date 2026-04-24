@@ -8,7 +8,7 @@ description: >-
 
 # Render Markdown → Slack mrkdwn
 
-Slack does not accept GitHub Markdown. This skill converts any `.md` under `plans/`, `reports/`, or elsewhere in the repo into a sibling `.slack.txt` using Slack mrkdwn rules (see [`.cursor/rules/journaling-slack-formatting.mdc`](../../rules/journaling-slack-formatting.mdc)).
+Slack does not accept GitHub Markdown. This skill converts any `.md` under `plans/`, `reports/`, or elsewhere in the repo into a sibling `.slack.txt` using Slack mrkdwn rules (see [`src/rules/journaling-slack-formatting.md`](../../rules/journaling-slack-formatting.md)).
 
 **Receipt convention:** `.slack.txt` is generated only at post time (automatically, by `journal-post-slack`). If a `.slack.txt` exists alongside a `.md`, that report/plan has been delivered to Slack. If it is missing, the content was generated but never posted.
 
@@ -24,11 +24,11 @@ You usually do **not** invoke this directly — `journal-post-slack --file foo.m
 
 ```bash
 # Preview what would be posted (does not write a file, does not post)
-python3 .cursor/skills/journal-render-slack/scripts/render_slack_from_markdown.py \
+python3 src/skills/journal-render-slack/scripts/render_slack_from_markdown.py \
   reports/report-manager-2026-04-01-to-2026-04-20.md --stdout
 
 # Force-regenerate a .slack.txt sibling (does not post)
-python3 .cursor/skills/journal-render-slack/scripts/render_slack_from_markdown.py \
+python3 src/skills/journal-render-slack/scripts/render_slack_from_markdown.py \
   plans/plan-2026-04-21.md
 # → plans/plan-2026-04-21.slack.txt
 ```
@@ -45,7 +45,7 @@ python3 .cursor/skills/journal-render-slack/scripts/render_slack_from_markdown.p
 | `- item` bullets | unchanged |
 | ```` ``` code fences ```` | unchanged |
 
-Full rules: [`.cursor/rules/journaling-slack-formatting.mdc`](../../rules/journaling-slack-formatting.mdc).
+Full rules: [`src/rules/journaling-slack-formatting.md`](../../rules/journaling-slack-formatting.md).
 
 ## Options
 
