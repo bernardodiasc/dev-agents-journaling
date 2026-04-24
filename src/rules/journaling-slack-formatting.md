@@ -36,4 +36,4 @@ Never use Markdown list/block conventions that Slack misreads as literals: avoid
 
 ## Reports for Slack
 
-Generate the artifact with `generate_manager_report.py --format slack --report-audience <manager|self|team|qa>` so the body is Slack mrkdwn. Choose **manager** for a short leadership summary without raw technical freeform; **self** for a full check-in (optional `<@user>`); **team** or **qa** for colleague- or validation-focused layouts. Keep `entries/` as Markdown; the posted file follows this rule.
+Generate the artifact with `generate_reports.py --format slack --report-audience <manager|self|team|qa>` so the body is Slack mrkdwn. Choose **manager** for a short leadership summary without raw technical freeform; **self** for a full check-in (optional `<@user>`); **team** or **qa** for colleague- or validation-focused layouts. Keep `entries/` as Markdown; the posted file follows this rule.

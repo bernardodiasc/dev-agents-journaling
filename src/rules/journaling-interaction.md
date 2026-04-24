@@ -49,7 +49,7 @@ If the user pasted a log or chat snippet, suggest a capture **style** based on c
 
 ## Report flow (all `.md` together)
 
-- Always run `generate_manager_report.py --from … --to …` **without** `--report-audience`. This writes all four `.md` reports — `manager`, `self`, `team`, `qa` — so the set stays in sync.
+- Always run `generate_reports.py --from … --to …` **without** `--report-audience`. This writes all four `.md` reports — `manager`, `self`, `team`, `qa` — so the set stays in sync.
 - **Do not** produce `.slack.txt` at report-generation time. That file is only created by `journal-post-slack` at post time (see below).
 - A missing `.slack.txt` next to a `.md` means that report has **never been posted** — useful for "what's unposted?" queries.
 

@@ -33,7 +33,7 @@ Before running, confirm with the user (see [`journaling-interaction.md`](../../r
 
 ```bash
 # Default: all audiences, Markdown (kept in sync)
-python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
+python3 src/skills/journal-generate-reports/scripts/generate_reports.py \
   --from 2026-04-01 --to 2026-04-20
 # → reports/report-manager-2026-04-01-to-2026-04-20.md
 # → reports/report-self-2026-04-01-to-2026-04-20.md
@@ -56,11 +56,11 @@ python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
 
 ```bash
 # Generate all four reports for last two weeks
-python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
+python3 src/skills/journal-generate-reports/scripts/generate_reports.py \
   --from 2026-04-07 --to 2026-04-20
 
 # (advanced) just the QA audience, custom output path
-python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
+python3 src/skills/journal-generate-reports/scripts/generate_reports.py \
   --from 2026-04-18 --to 2026-04-20 \
   --report-audience qa --output reports/qa-preview.md
 ```
@@ -73,7 +73,7 @@ python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
 >
 > **You:** yes, and post the manager one to the team channel after
 >
-> **Agent:** runs `generate_manager_report.py --from 2026-04-07 --to 2026-04-20` → confirms 4 files → then `post_slack_message.py --file reports/report-manager-… .md --channel-name team` (which renders `.slack.txt` at post time).
+> **Agent:** runs `generate_reports.py --from 2026-04-07 --to 2026-04-20` → confirms 4 files → then `post_slack_message.py --file reports/report-manager-… .md --channel-name team` (which renders `.slack.txt` at post time).
 
 ## Finding unposted reports
 
