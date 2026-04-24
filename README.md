@@ -133,7 +133,7 @@ python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
 > **Agent:** runs:
 
 ```bash
-python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
+python3 src/skills/journal-generate-reports/scripts/generate_reports.py \
   --from 2026-04-07 --to 2026-04-20
 ```
 

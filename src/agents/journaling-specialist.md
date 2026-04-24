@@ -57,7 +57,7 @@ Load the skill's `SKILL.md` when the task matches.
 | "Log what I did today" | `journal-capture-progress` — ask style/sections/links → append to `entries/YYYY-MM-DD.md` |
 | "Get context for today" | `journal-gather-context` — ask source+scope → delegate to `journal-fetch-slack` and/or `journal-fetch-jira` → files land in `context/` |
 | "Plan my day" | Phase 1: `generate_daily_plan.py` (no save) + any `context/` files → show catch-up + suggested focus → **wait for confirmation** → Phase 2: `generate_daily_plan.py --save` |
-| "Report for last two weeks" | Ask date range → `generate_manager_report.py --from … --to …` (all 4 `.md` in sync) |
+| "Report for last two weeks" | Ask date range → `generate_reports.py --from … --to …` (all 4 `.md` in sync) |
 | "Post that to Slack" | Ask which file + which channel (default / alias / ID) + thread? + mention? → `post_slack_message.py --file <path>.md` (renders `.slack.txt` as receipt) |
 | "What reports haven't I posted?" | List `reports/*.md` without a `.slack.txt` sibling |
 | "Pull activity from #dev-qa yesterday" | `journal-fetch-slack --channel-name dev-qa --hours 24 --save` → file under `context/` |
