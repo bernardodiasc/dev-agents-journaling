@@ -1,8 +1,19 @@
 # Journaling
 
-Local-first **progress capture**, **context gathering** (Slack + Jira links), **daily planning**, **period reports**, and **Slack delivery** — driven by Cursor skills and the **journaling specialist** subagent.
+Local-first **progress capture**, **context gathering** (Slack + Jira links), **daily planning**, **period reports**, and **Slack delivery** — driven by skills and the **journaling specialist** subagent. Canonical skill/rule/agent content lives under `src/` and is mirrored into both `.cursor/` and `.claude/` as symlinks (same behaviour, vendor-agnostic source).
 
-The agent **asks before assuming**: style of capture, source of context, date range for reports, target channel for Slack. See [`.cursor/rules/journaling-interaction.mdc`](.cursor/rules/journaling-interaction.mdc) for the full interaction contract.
+The agent **asks before assuming**: style of capture, source of context, date range for reports, target channel for Slack. See [`src/rules/journaling-interaction.md`](src/rules/journaling-interaction.md) for the full interaction contract.
+
+## Setup (first-time and after pulling)
+
+`.cursor/` and `.claude/` are **gitignored** — they're generated from `src/` on demand.
+
+```bash
+bash scripts/sync-vendor-dirs.sh   # generate .cursor/ and .claude/ symlinks into src/
+bash scripts/install-hooks.sh      # one-time: auto-regenerate after git pull / checkout
+```
+
+Edit canonical files under `src/` (or through the `.cursor/` / `.claude/` symlinks — either works; the symlinks write through to `src/`). To verify vendor dirs are in sync: `bash scripts/sync-vendor-dirs.sh --check`.
 
 ## Layout
 
@@ -14,22 +25,22 @@ The agent **asks before assuming**: style of capture, source of context, date ra
 | `reports/*.slack.txt` · `plans/*.slack.txt` | Slack-mrkdwn sibling — **created only at post time**; its presence is the delivery receipt. |
 | `context/slack-<channel>-<from>-to-<to>.txt` | Fetched Slack channel history (for plan / capture context). |
 | `context/jira-<slug>-<date>.txt` | Pasted Atlassian links + notes (ticket, epic, project, freeform). |
-| `.cursor/rules/` | Repo rules: architecture, interaction, Slack formatting. |
-| `.cursor/agents/journaling-specialist.md` | Subagent: which skill to use and when. |
-| `.cursor/skills/journal-*` | One folder per skill (see below). |
+| `src/rules/` | Repo rules: architecture, interaction, Slack formatting. |
+| `src/agents/journaling-specialist.md` | Subagent: which skill to use and when. |
+| `src/skills/journal-*` | One folder per skill (see below). |
 
 ## Skills
 
 | Skill | What it does |
 |-------|--------------|
-| [`journal-capture-progress`](.cursor/skills/journal-capture-progress/) | Append or create daily entries. Ask-first about style and sections. |
-| [`journal-gather-context`](.cursor/skills/journal-gather-context/) | Router. Ask what source (Slack / Jira / note) and scope, then delegate. |
-| [`journal-fetch-slack`](.cursor/skills/journal-fetch-slack/) | Pull channel history via `conversations.history` (default, alias, or explicit ID). |
-| [`journal-fetch-jira`](.cursor/skills/journal-fetch-jira/) | Save pasted Atlassian URLs (ticket / epic / project / note) with optional notes. No API. |
-| [`journal-daily-plan`](.cursor/skills/journal-daily-plan/) | Two-phase: catch-up → confirm → save `plans/plan-YYYY-MM-DD.md`. |
-| [`journal-generate-reports`](.cursor/skills/journal-generate-reports/) | Generate all four audience reports in sync. |
-| [`journal-render-slack`](.cursor/skills/journal-render-slack/) | Convert a `.md` to its `.slack.txt` sibling (called at post time). |
-| [`journal-post-slack`](.cursor/skills/journal-post-slack/) | Post file or text to Slack. For `.md`, renders the `.slack.txt` receipt first. |
+| [`journal-capture-progress`](src/skills/journal-capture-progress/) | Append or create daily entries. Ask-first about style and sections. |
+| [`journal-gather-context`](src/skills/journal-gather-context/) | Router. Ask what source (Slack / Jira / note) and scope, then delegate. |
+| [`journal-fetch-slack`](src/skills/journal-fetch-slack/) | Pull channel history via `conversations.history` (default, alias, or explicit ID). |
+| [`journal-fetch-jira`](src/skills/journal-fetch-jira/) | Save pasted Atlassian URLs (ticket / epic / project / note) with optional notes. No API. |
+| [`journal-daily-plan`](src/skills/journal-daily-plan/) | Two-phase: catch-up → confirm → save `plans/plan-YYYY-MM-DD.md`. |
+| [`journal-generate-reports`](src/skills/journal-generate-reports/) | Generate all four audience reports in sync. |
+| [`journal-render-slack`](src/skills/journal-render-slack/) | Convert a `.md` to its `.slack.txt` sibling (called at post time). |
+| [`journal-post-slack`](src/skills/journal-post-slack/) | Post file or text to Slack. For `.md`, renders the `.slack.txt` receipt first. |
 
 ## Report audiences
 
@@ -40,7 +51,7 @@ Default behavior writes **all four** as Markdown on every invocation so they sta
 - **`team`** — Colleague-friendly: highlights, dependencies, coming up.
 - **`qa`** — QA / validation lens: deliverables, risks, suggested verification.
 
-See [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc) for the full schema and the **delivery-receipt** convention.
+See [`src/rules/journaling-repo.md`](src/rules/journaling-repo.md) for the full schema and the **delivery-receipt** convention.
 
 ## Channels (named aliases)
 
@@ -57,7 +68,7 @@ JOURNALING_SLACK_CHANNEL_ID_BENJI3_DEV=C0…
 Reference them on the CLI with `--channel-name <name>` (case-insensitive, `-` and spaces normalize to `_`). List configured aliases:
 
 ```bash
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py --list-channels
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py --list-channels
 ```
 
 ## Quick start
@@ -81,7 +92,7 @@ Chat flow with the specialist:
 > **Agent:** drafts bullets from chat, confirms, then runs:
 
 ```bash
-python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py \
+python3 src/skills/journal-capture-progress/scripts/append_journal_entry.py \
   --win "Merged search-transparency PR" \
   --win "Green CI on main" \
   --next-step "Address reviewer comments on format_response"
@@ -98,19 +109,19 @@ python3 .cursor/skills/journal-capture-progress/scripts/append_journal_entry.py 
 > **Agent:** runs:
 
 ```bash
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
   --channel-name dev-qa --hours 24 --save
-python3 .cursor/skills/journal-fetch-jira/scripts/save_jira_context.py \
+python3 src/skills/journal-fetch-jira/scripts/save_jira_context.py \
   --kind ticket --url https://x-team-internal.atlassian.net/browse/AIAUT-436
 
-python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
+python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
   --context-file context/slack-C03333CCCCC-2026-04-20-to-2026-04-21.txt
 ```
 
 → prints catch-up + a suggested focus → **waits for you** to confirm or edit → on confirmation:
 
 ```bash
-python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
+python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
   --context-file context/slack-C03333CCCCC-2026-04-20-to-2026-04-21.txt --save
 # → plans/plan-2026-04-21.md
 ```
@@ -122,7 +133,7 @@ python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
 > **Agent:** runs:
 
 ```bash
-python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.py \
+python3 src/skills/journal-generate-reports/scripts/generate_manager_report.py \
   --from 2026-04-07 --to 2026-04-20
 ```
 
@@ -135,7 +146,7 @@ python3 .cursor/skills/journal-generate-reports/scripts/generate_manager_report.
 > **Agent:** (confirms target) runs:
 
 ```bash
-python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
+python3 src/skills/journal-post-slack/scripts/post_slack_message.py \
   --file reports/report-manager-2026-04-07-to-2026-04-20.md \
   --channel-name team \
   --prepend-user-mention
@@ -154,7 +165,7 @@ done
 ### 6. "Preview the Slack version of my plan without posting"
 
 ```bash
-python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
+python3 src/skills/journal-post-slack/scripts/post_slack_message.py \
   --file plans/plan-2026-04-21.md --dry-run
 ```
 
@@ -167,7 +178,7 @@ python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
 > **You:** title "Onboarding epic", link the epic page, note it's this sprint's focus
 
 ```bash
-python3 .cursor/skills/journal-fetch-jira/scripts/save_jira_context.py \
+python3 src/skills/journal-fetch-jira/scripts/save_jira_context.py \
   --kind epic \
   --url https://x-team-internal.atlassian.net/browse/AIAUT-400 \
   --title "Onboarding epic" \
@@ -181,4 +192,4 @@ Keep tokens, user IDs, channel IDs, and the Jira base URL in `.env` (gitignored)
 
 ## Security
 
-Scripts follow [`.cursor/rules/journaling-repo.mdc`](.cursor/rules/journaling-repo.mdc): no hardcoded secrets, safe paths for file arguments, Slack channel IDs (not `#names`), Atlassian URL host enforcement when `JOURNALING_JIRA_BASE_URL` is set. See the rule file for full details.
+Scripts follow [`src/rules/journaling-repo.md`](src/rules/journaling-repo.md): no hardcoded secrets, safe paths for file arguments, Slack channel IDs (not `#names`), Atlassian URL host enforcement when `JOURNALING_JIRA_BASE_URL` is set. See the rule file for full details.

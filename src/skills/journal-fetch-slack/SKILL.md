@@ -27,7 +27,7 @@ JOURNALING_SLACK_CHANNEL_ID_DEV_QA=C0…
 JOURNALING_SLACK_CHANNEL_ID_BENJI3_DEV=C0…
 ```
 
-The agent should **ask first** when a channel is ambiguous (see [`journaling-interaction.mdc`](../../rules/journaling-interaction.mdc)) and can list configured aliases with `--list-channels`.
+The agent should **ask first** when a channel is ambiguous (see [`journaling-interaction.md`](../../rules/journaling-interaction.md)) and can list configured aliases with `--list-channels`.
 
 ## Quick start
 
@@ -35,13 +35,13 @@ The agent should **ask first** when a channel is ambiguous (see [`journaling-int
 
 ```bash
 # List configured aliases
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py --list-channels
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py --list-channels
 
 # Default channel, last 50 messages (stdout)
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py
 
 # Named alias, last 24 hours, auto-save to context/
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
   --channel-name dev-qa --hours 24 --save
 # → context/slack-C03333CCCCC-2026-04-20-to-2026-04-21.txt
 ```
@@ -68,11 +68,11 @@ python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
 
 ```bash
 # Pull from team channel since a specific date and save
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
   --channel-name team --since 2026-04-20 --save
 
 # One-off channel ID, last 8 hours
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
   --hours 8 --channel C0987654321 --save
 ```
 
@@ -96,9 +96,9 @@ python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
 
 - `--channel` must be a Slack **conversation ID** (e.g. `C0123456789`), not `#channel-name`.
 - `--output` must point to a path **inside this repository**.
-- Token only via env / `.env` — see [`.cursor/rules/journaling-repo.mdc`](../../rules/journaling-repo.mdc).
+- Token only via env / `.env` — see [`src/rules/journaling-repo.md`](../../rules/journaling-repo.md).
 - Message text is truncated at 500 chars per message in text format to keep context manageable.
 
 ## Shared helpers
 
-Scripts load tokens via [`.cursor/skills/_shared/script_utils.py`](../_shared/script_utils.py). Repo root and safe paths: [`journaling_repo.py`](../_shared/journaling_repo.py), [`path_guard.py`](../_shared/path_guard.py).
+Scripts load tokens via [`src/skills/_shared/script_utils.py`](../_shared/script_utils.py). Repo root and safe paths: [`journaling_repo.py`](../_shared/journaling_repo.py), [`path_guard.py`](../_shared/path_guard.py).

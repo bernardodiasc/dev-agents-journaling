@@ -20,7 +20,7 @@ Use when the user says things like:
 - "capture this project board I'm working on"
 - "remember this link so we can reference it during planning"
 
-The agent should **ask first** (see [`journaling-interaction.mdc`](../../rules/journaling-interaction.mdc)): which kind of context (ticket / epic / project / note)? which URL(s)? any notes on why this matters?
+The agent should **ask first** (see [`journaling-interaction.md`](../../rules/journaling-interaction.md)): which kind of context (ticket / epic / project / note)? which URL(s)? any notes on why this matters?
 
 ## Quick start
 
@@ -28,14 +28,14 @@ The agent should **ask first** (see [`journaling-interaction.mdc`](../../rules/j
 
 ```bash
 # Single ticket
-python3 .cursor/skills/journal-fetch-jira/scripts/save_jira_context.py \
+python3 src/skills/journal-fetch-jira/scripts/save_jira_context.py \
   --kind ticket \
   --url https://x-team-internal.atlassian.net/browse/AIAUT-436 \
   --note "Blocker for FJ-01 QA"
 # → context/jira-aiaut-436-2026-04-21.txt
 
 # Epic with multiple child links + named slug
-python3 .cursor/skills/journal-fetch-jira/scripts/save_jira_context.py \
+python3 src/skills/journal-fetch-jira/scripts/save_jira_context.py \
   --kind epic \
   --url https://x-team-internal.atlassian.net/browse/AIAUT-400 \
   --url https://x-team-internal.atlassian.net/browse/AIAUT-436 \

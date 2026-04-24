@@ -1,14 +1,15 @@
 ---
 name: journaling-specialist
+description: Routes journaling tasks (capture progress, gather context, plan the day, generate reports, post to Slack) to the right skill under src/skills/journal-*. Always asks before assuming defaults. Scope is the journaling repo only.
 model: inherit
 ---
 
 # Subagent: journaling-specialist
 
 **Display name:** Journaling specialist
-**Scope:** The **journaling** repository only — `entries/`, `reports/`, `plans/`, `context/`, `.cursor/skills/journal-*`, and the rule files under [`.cursor/rules/`](../rules/). Do not apply Benji/backend conventions here; use this repo's rule files as source of truth.
+**Scope:** The **journaling** repository only — `entries/`, `reports/`, `plans/`, `context/`, `src/skills/journal-*`, and the rule files under [`src/rules/`](../rules/). Do not apply Benji/backend conventions here; use this repo's rule files as source of truth.
 
-**Purpose:** Help the user **capture progress**, **gather context**, **plan the day**, **generate manager reports**, and **post to Slack**. Always **ask first** before assuming a default (see [`journaling-interaction.mdc`](../rules/journaling-interaction.mdc)).
+**Purpose:** Help the user **capture progress**, **gather context**, **plan the day**, **generate manager reports**, and **post to Slack**. Always **ask first** before assuming a default (see [`journaling-interaction.md`](../rules/journaling-interaction.md)).
 
 ---
 
@@ -16,9 +17,9 @@ model: inherit
 
 | Layer | Location |
 |-------|----------|
-| Ask-first interaction rules | [`.cursor/rules/journaling-interaction.mdc`](../rules/journaling-interaction.mdc) |
-| Schema + architecture | [`.cursor/rules/journaling-repo.mdc`](../rules/journaling-repo.mdc) |
-| Slack formatting | [`.cursor/rules/journaling-slack-formatting.mdc`](../rules/journaling-slack-formatting.mdc) |
+| Ask-first interaction rules | [`src/rules/journaling-interaction.md`](../rules/journaling-interaction.md) |
+| Schema + architecture | [`src/rules/journaling-repo.md`](../rules/journaling-repo.md) |
+| Slack formatting | [`src/rules/journaling-slack-formatting.md`](../rules/journaling-slack-formatting.md) |
 | Daily entries | `entries/YYYY-MM-DD.md` |
 | Generated reports | `reports/report-<audience>-<from>-to-<to>.md` (`.slack.txt` = delivery receipt) |
 | Daily plans | `plans/plan-YYYY-MM-DD.md` (`.slack.txt` = delivery receipt) |
@@ -72,7 +73,7 @@ Load the skill's `SKILL.md` when the task matches.
 - **Reports:** only the date range (audiences are all four, always).
 - **Post:** which file, which channel, thread, mention.
 
-Full rules: [`journaling-interaction.mdc`](../rules/journaling-interaction.mdc).
+Full rules: [`journaling-interaction.md`](../rules/journaling-interaction.md).
 
 ---
 
@@ -84,7 +85,7 @@ A `.slack.txt` next to a `.md` in `reports/` or `plans/` means that file was **d
 
 ## Escalation
 
-- Schema or layout questions → [`journaling-repo.mdc`](../rules/journaling-repo.mdc).
-- Slack formatting questions → [`journaling-slack-formatting.mdc`](../rules/journaling-slack-formatting.mdc).
-- Interaction / "should I ask?" questions → [`journaling-interaction.mdc`](../rules/journaling-interaction.mdc).
+- Schema or layout questions → [`journaling-repo.md`](../rules/journaling-repo.md).
+- Slack formatting questions → [`journaling-slack-formatting.md`](../rules/journaling-slack-formatting.md).
+- Interaction / "should I ask?" questions → [`journaling-interaction.md`](../rules/journaling-interaction.md).
 - Slack auth errors → check `.env` and `--token-var` on `post_slack_message.py` / `fetch_slack_messages.py`.

@@ -27,7 +27,7 @@ Then **propose a plan shape** — a few bullets of "here's what I'd focus on tod
 Only once the user has confirmed the plan:
 
 ```bash
-python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
+python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
   --context-file context/slack-C012-2026-04-20-to-2026-04-21.txt \
   --save
 # → plans/plan-2026-04-21.md
@@ -49,22 +49,22 @@ The Slack-mrkdwn sibling (`plans/plan-YYYY-MM-DD.slack.txt`) is **not** produced
 
 ```bash
 # 1. Gather context (ask-first via journal-gather-context; examples here)
-python3 .cursor/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
+python3 src/skills/journal-fetch-slack/scripts/fetch_slack_messages.py \
   --channel-name dev-qa --hours 24 --save
 
-python3 .cursor/skills/journal-fetch-jira/scripts/save_jira_context.py \
+python3 src/skills/journal-fetch-jira/scripts/save_jira_context.py \
   --kind ticket --url https://x-team-internal.atlassian.net/browse/AIAUT-436
 
 # 2. Phase 1 — catch-up (stdout, no file written)
-python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
+python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
   --context-file context/slack-C012-2026-04-20-to-2026-04-21.txt
 
 # 3. User confirms → Phase 2 (save)
-python3 .cursor/skills/journal-daily-plan/scripts/generate_daily_plan.py \
+python3 src/skills/journal-daily-plan/scripts/generate_daily_plan.py \
   --context-file context/slack-C012-2026-04-20-to-2026-04-21.txt --save
 
 # 4. (Optional) Post to Slack — this is when the .slack.txt is created
-python3 .cursor/skills/journal-post-slack/scripts/post_slack_message.py \
+python3 src/skills/journal-post-slack/scripts/post_slack_message.py \
   --file plans/plan-2026-04-21.md --channel-name self
 ```
 
