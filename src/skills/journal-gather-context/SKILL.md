@@ -24,7 +24,7 @@ If the user's request is ambiguous, the agent must ask before doing anything:
 - **What scope?** Date range (Slack), specific keys / URLs (Jira), or a freeform title (notes).
 - **What's this for?** Feeding into today's plan? Referenced during a capture? Just archived?
 
-Only after the answers are clear, run the corresponding sub-skill. Full ask-first rules: [`../../rules/journaling-interaction.mdc`](../../rules/journaling-interaction.mdc).
+Only after the answers are clear, run the corresponding sub-skill. Full ask-first rules: [`../../rules/journaling-interaction.md`](../../rules/journaling-interaction.md).
 
 ## Routing table
 
