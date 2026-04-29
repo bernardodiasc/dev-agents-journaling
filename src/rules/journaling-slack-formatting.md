@@ -34,6 +34,15 @@ Never use Markdown list/block conventions that Slack misreads as literals: avoid
 - If you have a **Slack user ID**, mention as `<@SlackUserID>`. Do not rely on `@display_name` when the ID is known.
 - If you have a **channel ID**, use `<#ChannelID>`. Use `#channel-name` only when you do **not** have the ID.
 
+## Markdown → Slack (`journal-render-slack`)
+
+Plans and reports stay as GitHub-flavored Markdown on disk; `post_slack_message.py` renders a sibling `.slack.txt` via `render_slack_from_markdown.py`. The renderer converts headings, links, bare URLs, then `**bold**` — so bold around a bare URL does not corrupt the link.
+
+**Authoring tips (fewer surprises even if the renderer changes):**
+
+- Prefer a **bare URL** or `[label](url)` instead of `**https://…**` (bold around URLs is easy to misread in Slack).
+- Prefer plain words in `##` headings instead of `## **Section**` (the renderer strips inner `**`, but plain headings are clearer in the source).
+
 ## Reports for Slack
 
 Generate the artifact with `generate_reports.py --format slack --report-audience <manager|self|team|qa>` so the body is Slack mrkdwn. Choose **manager** for a short leadership summary without raw technical freeform; **self** for a full check-in (optional `<@user>`); **team** or **qa** for colleague- or validation-focused layouts. Keep `entries/` as Markdown; the posted file follows this rule.

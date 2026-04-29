@@ -4,11 +4,11 @@ Called by ``journal-post-slack`` just before posting. The produced ``.slack.txt`
 left on disk as a *receipt* — its existence means the ``.md`` was delivered to Slack.
 
 Conversion rules (Slack mrkdwn, not GitHub Markdown):
-  - ``#``/``##``/``###`` headings  → ``*text*`` on its own line
+  - ``#``/``##``/``###`` headings  → ``*text*`` on its own line (inner ``**`` / ``__`` stripped first)
+  - ``[label](url)``               → ``<url|label>`` (before bold / bare URL)
+  - Bare URLs                      → ``<url>`` (before ``**`` → ``*`` so ``**https://…**`` does not break)
   - ``**bold**``                   → ``*bold*``
   - ``__bold__``                   → ``*bold*``
-  - ``[label](url)``               → ``<url|label>``
-  - Bare URLs                      → ``<url>``
   - ``- item`` bullets             → unchanged (Slack renders these fine)
   - Code fences                    → unchanged (Slack renders ``` blocks)
   - Italic (``_x_``), strike (``~x~``), inline code (`````x`````)  → unchanged
@@ -35,7 +35,16 @@ _HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
 _MD_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _BOLD_STAR = re.compile(r"\*\*(.+?)\*\*")
 _BOLD_UNDER = re.compile(r"__(.+?)__")
-_BARE_URL = re.compile(r"(?<![<\w/|])https?://[^\s<>)]+")
+# Do not treat a trailing * as part of the URL (e.g. after **url** → *url*).
+_BARE_URL = re.compile(r"(?<![<\w/|])https?://[^\s<>)]+(?<!\*)")
+
+
+def _heading_plain_title(raw_title: str) -> str:
+    """Strip GitHub-style bold/underline from heading text before wrapping in Slack *…*."""
+    t = raw_title.strip()
+    t = _BOLD_STAR.sub(r"\1", t)
+    t = _BOLD_UNDER.sub(r"\1", t)
+    return t.strip()
 
 
 def _convert_line(line: str, *, in_code: bool) -> str:
@@ -43,11 +52,12 @@ def _convert_line(line: str, *, in_code: bool) -> str:
         return line
     m = _HEADING.match(line)
     if m:
-        return f"*{m.group(2).strip()}*"
+        inner = _heading_plain_title(m.group(2))
+        return f"*{inner}*"
     line = _MD_LINK.sub(lambda mo: f"<{mo.group(2)}|{mo.group(1)}>", line)
+    line = _BARE_URL.sub(lambda mo: f"<{mo.group(0)}>", line)
     line = _BOLD_STAR.sub(r"*\1*", line)
     line = _BOLD_UNDER.sub(r"*\1*", line)
-    line = _BARE_URL.sub(lambda mo: f"<{mo.group(0)}>", line)
     return line
 
 
