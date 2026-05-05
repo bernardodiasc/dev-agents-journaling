@@ -1,8 +1,8 @@
 ---
 description: Journaling repository — architecture, entry/report/plan/context schema, editing conventions, skills index.
 globs:
-  - "**/*"
-alwaysApply: true
+  - "journaling/**/*"
+alwaysApply: false
 ---
 
 # Journaling repository
