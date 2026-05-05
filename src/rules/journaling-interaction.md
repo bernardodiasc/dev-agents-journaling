@@ -1,8 +1,8 @@
 ---
 description: Ask-first interaction rules for the journaling specialist — confirmations over assumptions.
 globs:
-  - "**/*"
-alwaysApply: true
+  - "journaling/**/*"
+alwaysApply: false
 ---
 
 # Journaling interaction rules

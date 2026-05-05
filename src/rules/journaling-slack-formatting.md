@@ -1,8 +1,8 @@
 ---
 description: Slack mrkdwn and message rules — IDs, mentions, and forbidden Markdown for journaling Slack posts.
 globs:
-  - "**/*"
-alwaysApply: true
+  - "journaling/**/*"
+alwaysApply: false
 ---
 
 # Slack formatting (journaling)
