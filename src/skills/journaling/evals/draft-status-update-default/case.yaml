@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: draft-status-update-default
+expected_outcome: |
+  A Slack-ready status update in a single code block covering activity since the last posted update (Mon Nov 10), grouped into Done / In progress / Next / Blocked, one short line per item with bare GitHub URLs, including the staging DB-grants blocker from the journal. Short chat text around it. Nothing is posted.
+context:
+  scaffold_script: place-files.sh

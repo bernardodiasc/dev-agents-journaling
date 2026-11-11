@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: weekly-update-with-chat-context
+expected_outcome: |
+  A weekly status update covering the last 7 days in a single code block, with a Blocked line about the IT Slack app approval, no documentation-related items, Slack mrkdwn and bare URLs.
+context:
+  scaffold_script: place-files.sh

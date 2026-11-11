@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: post-status-update-confirms
+expected_outcome: |
+  Builds the status update, shows the exact text that would be posted and the target channel (the default channel), and asks one short yes/no confirmation. It does not post before the user confirms.
+context:
+  scaffold_script: place-files.sh
