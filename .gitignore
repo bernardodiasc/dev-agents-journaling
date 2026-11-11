@@ -3,11 +3,11 @@
 __pycache__/
 *.py[cod]
 
-context/
-entries/
-plans/
-reports/
-updates/
+/context/
+/entries/
+/plans/
+/reports/
+/updates/
 
 # Vendor-tool dirs — regenerated from src/ via scripts/sync-vendor-dirs.sh
 .cursor/

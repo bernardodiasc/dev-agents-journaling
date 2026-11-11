@@ -1,0 +1,7 @@
+*Status update · Tue Nov 10*
+
+*Done*
+• Onboarding checklist cleanup
+
+*Next*
+• Search filters regression
