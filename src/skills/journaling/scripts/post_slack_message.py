@@ -339,6 +339,9 @@ def main() -> None:
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
             status_receipt = repo / "updates" / f"status-{stamp}.slack.txt"
             atomic_write_text(status_receipt, text)
+            stale_draft = repo / "updates" / "draft.txt"
+            if stale_draft.is_file():
+                stale_draft.unlink()  # consumed: the next draft starts fresh
             if blocks:
                 atomic_write_text(status_receipt.with_name(status_receipt.name.replace(".slack.txt", ".blocks.json")),
                                   json.dumps(blocks, ensure_ascii=False, indent=2))

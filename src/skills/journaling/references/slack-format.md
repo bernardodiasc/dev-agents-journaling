@@ -34,12 +34,17 @@ Re-rendering strips old tags first, so statuses are always current at post time.
 
 ## Block Kit (status update posts)
 
-`post_slack_message.py --status-update` sends `blocks` + fallback `text`:
-header (first `*line*`) → optional grey context line (`--context`) → per section a
-divider and `*Title*` → per item a section (`• text`) and a context block with status
-chips (`🟢 <url|agents#11> approved`). Paragraphs become plain sections. Over 50
-blocks it falls back to one section per group. Block Kit only exists in bot posts;
-pasted drafts stay as tagged mrkdwn.
+`post_slack_message.py --status-update` sends `blocks` + fallback `text`, kept to a
+handful of blocks so it reads like a normal message:
+
+1. `header` — the first `*line*` of the draft
+2. `context` — `--context` (period + counts)
+3. `rich_text` — bold section titles and `rich_text_list` bullets; each GitHub link is
+   `repo#12` followed by its status dot (`🟡`), `❌ CI` and `label`s in code style
+   (paragraphs in the draft become plain `section` blocks in between)
+4. `context` — legend of only the statuses that appear (`🟣 merged   🟡 in review`)
+
+Block Kit only exists in bot posts; pasted drafts stay as tagged mrkdwn (with words).
 
 ## Mentions and IDs
 

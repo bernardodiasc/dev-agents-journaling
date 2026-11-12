@@ -26,10 +26,10 @@ GITHUB_URL = re.compile(
 
 _FIELDS = """
   __typename
-  ... on PullRequest { number isDraft merged state reviewDecision
+  ... on PullRequest { number title author { login } isDraft merged state reviewDecision
       repository { name } labels(first: 3) { nodes { name } }
       commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
-  ... on Issue { number state stateReason repository { name } labels(first: 3) { nodes { name } } }
+  ... on Issue { number title author { login } state stateReason repository { name } labels(first: 3) { nodes { name } } }
   ... on Commit { abbreviatedOid repository { name } }
 """
 
@@ -42,6 +42,8 @@ class ItemStatus:
     state: str = ""           # approved / in review / draft / merged / open / closed ...
     labels: list[str] = field(default_factory=list)
     ci_failing: bool = False
+    title: str = ""
+    author: str = ""
 
     def tag(self) -> str:
         """``🟢 approved ❌ CI `label``` (empty for commits)."""
@@ -78,6 +80,11 @@ def _labels(node: dict) -> list[str]:
     return [n["name"] for n in (node.get("labels") or {}).get("nodes", []) if n.get("name")][:MAX_LABELS]
 
 
+def _meta(node: dict) -> dict:
+    return {"title": " ".join(str(node.get("title") or "").split()),
+            "author": str((node.get("author") or {}).get("login") or "")}
+
+
 def _pr_status(node: dict, label: str) -> ItemStatus:
     if node.get("merged"):
         emoji, state = "🟣", "merged"
@@ -97,7 +104,7 @@ def _pr_status(node: dict, label: str) -> ItemStatus:
         rollup = ((commits[0].get("commit") or {}).get("statusCheckRollup") or {}).get("state")
     is_open = state not in ("merged", "closed")
     return ItemStatus(kind="pr", label=label, emoji=emoji, state=state, labels=_labels(node),
-                      ci_failing=is_open and rollup in ("FAILURE", "ERROR"))
+                      ci_failing=is_open and rollup in ("FAILURE", "ERROR"), **_meta(node))
 
 
 def _issue_status(node: dict, label: str) -> ItemStatus:
@@ -107,7 +114,7 @@ def _issue_status(node: dict, label: str) -> ItemStatus:
         emoji, state = "⚫", "not planned"
     else:
         emoji, state = "✅", "closed"
-    return ItemStatus(kind="issue", label=label, emoji=emoji, state=state, labels=_labels(node))
+    return ItemStatus(kind="issue", label=label, emoji=emoji, state=state, labels=_labels(node), **_meta(node))
 
 
 def _query_batch(urls: list[str]) -> dict:

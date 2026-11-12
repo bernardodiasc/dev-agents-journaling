@@ -49,7 +49,8 @@ short question beats a checklist. The user found the old ask-everything flow ted
    Flags: `--since auto|Nd|YYYY-MM-DD|ISO`, `--owner ORG` (repeatable; default
    `JOURNALING_GITHUB_OWNERS`), `--no-github`. It prints the period and why it was
    chosen, your GitHub activity with each item's live status (`[🟢 approved]`,
-   `[⚪ draft]`, labels…), and journal entries in the period.
+   `[⚪ draft]`, labels…), **PRs you reviewed** (from your activity feed, so reviews
+   made minutes ago are included, with your verdict), and journal entries.
 2. **Merge in** anything the user said in this conversation ("mention I'm blocked on
    infra", "only about X", "add a context paragraph") — it outranks the digest and
    the default format.
@@ -64,7 +65,9 @@ short question beats a checklist. The user found the old ask-everything flow ted
    It appends `🟢 approved` / `🟡 in review` / `🔴 changes requested` / `⚪ draft` /
    `🟣 merged` / `🔵 open` / `✅ closed`, `❌ CI` when checks fail, and up to 3
    labels as `` `label` `` after every GitHub URL. Statuses come from GitHub, never
-   from you — don't hand-type them.
+   from you — don't hand-type them. It also saves the draft to `updates/draft.txt`,
+   so "post status update" later — in this or any other session — posts this exact
+   draft instead of rewriting it.
 4. **Reply** with:
    - one line: period + sources (e.g. "Since Mon 10:00 · 2 merged, 15 open PRs, no journal entries"),
    - the script's output inside a single ```` ``` ```` code block (so it copies cleanly),
@@ -89,6 +92,10 @@ Draft (what you write):
 • Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 https://github.com/acme/billing/pull/81
 • Per-service database users https://github.com/acme/infra/pull/79
 
+*Reviewed*
+• Search ranking fixes https://github.com/acme/search/pull/12 https://github.com/acme/search/pull/14
+• Dependency security bumps https://github.com/acme/web/pull/301 https://github.com/acme/api/pull/77
+
 *Next*
 • Invoice export job https://github.com/acme/billing/issues/5
 
@@ -105,8 +112,11 @@ After `status_render.py` (what the user sees and pastes):
 
 Why it looks like this, so you can handle cases the example doesn't cover:
 
-- **Sections**: `Done` / `In progress` / `Next` / `Blocked`, in that order. Drop any
-  section that would be empty — an empty "Blocked: none" is noise.
+- **Sections**: `Done` / `In progress` / `Reviewed` / `Next` / `Blocked`, in that
+  order. Drop any section that would be empty — an empty "Blocked: none" is noise.
+- **Reviewed**: others' PRs you reviewed in the period, grouped by theme or repo
+  (≤ 3 links per line, one short clause: "Dependency security bumps"). Reviews are
+  real work readers care about — include them whenever the digest has any.
 - **One line per item, outcome first.** Rewrite PR titles as what changed for the
   reader ("Per-service database users"), not how ("Give each service its own…").
   Strip ticket prefixes like `[#669]:`. No "I", no adjectives, no why — the PR has the why.
@@ -125,8 +135,6 @@ Why it looks like this, so you can handle cases the example doesn't cover:
   hand-write `<url|label>` in the draft.
 - **Context paragraph**: allowed when the user asks for one (or for a single-topic
   update that needs framing) — 1–3 sentences right after the header.
-- **Reviews** of others' PRs: one Done line at most ("Reviewed 3 PRs" + links), only
-  if they're notable.
 - **Slack mrkdwn only**: `*bold*` (single asterisks), `_italic_`, `•` bullets. No
   `#` headings, no `**`, no `[text](url)`. Details in `references/slack-format.md`.
 - **Header**: `*Status update · <Day Mon D>*` (or `*Weekly update · Nov 3–7*` for a
@@ -135,7 +143,9 @@ Why it looks like this, so you can handle cases the example doesn't cover:
 ## Post flow
 
 1. **Get the text.** If a draft is already in this conversation, use it (with any
-   edits the user asked for). Otherwise run the Draft flow first.
+   edits the user asked for). Otherwise check for a saved one —
+   `python3 $SKILL/scripts/status_render.py --saved` prints it freshly tagged (exit
+   2 = none pending) — and use that. Only if neither exists, run the Draft flow.
 2. **Confirm once.** Show the exact text in a code block and the target channel, then
    ask one line: "Post to <channel>?" The default channel is
    `JOURNALING_SLACK_CHANNEL_ID` ("my channel"); named aliases like "team" map to
@@ -151,11 +161,13 @@ Why it looks like this, so you can handle cases the example doesn't cover:
    ...
    EOF
    ```
-   `--status-update` posts **Block Kit**: the first `*line*` becomes a header,
-   `--context` a small grey line under it (use the period + counts line), each
-   section gets a divider, and each item is followed by grey status chips
-   (`🟢 agents#11 approved`). The tagged mrkdwn text goes along as the notification
-   fallback. It also saves the post under `updates/` (start of the next period).
+   `--status-update` posts a compact **Block Kit** message: the first `*line*` is the
+   header, `--context` a small grey line under it (period + counts, including
+   reviews: "Since Wed 11:56 · 1 merged · 9 open PRs · 6 reviews"), then one tight
+   rich-text list — bold section titles, bullets with `repo#12 🟡` links — and a grey
+   legend of the statuses used. The tagged mrkdwn text goes along as the notification
+   fallback. It saves the post under `updates/` (start of the next period) and
+   clears the saved draft.
    Add `--no-blocks` for plain text, `--channel-name team` for an alias,
    `--thread-ts <ts>` to reply in a thread. Link previews are off.
 4. **Report back** in one line with the permalink the script prints.
