@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _shared.journaling_repo import find_journaling_repo_root
 from _shared.path_guard import read_text_limited
 from _shared.script_utils import load_optional_install_config
+from github_status import canonical, fetch_statuses
 
 GH_TIMEOUT_SECONDS = 30
 GH_LIMIT = 50
@@ -131,11 +132,12 @@ def github_activity(since: datetime, owners: list[str]) -> dict[str, list[dict]]
     return out
 
 
-def _fmt_item(it: dict) -> str:
+def _fmt_item(it: dict, statuses: dict) -> str:
     repo = (it.get("repository") or {}).get("nameWithOwner", "?")
-    draft = " [draft]" if it.get("isDraft") else ""
     title = " ".join(str(it.get("title", "")).split())
-    return f"- {title}{draft} — {repo}#{it.get('number')} — {it.get('url')}"
+    st = statuses.get(canonical(str(it.get("url", ""))) or "")
+    tag = f" [{st.tag()}]" if st and st.tag() else (" [draft]" if it.get("isDraft") else "")
+    return f"- {title}{tag} — {repo}#{it.get('number')} — {it.get('url')}"
 
 
 # --------------------------------------------------------------------------- journal
@@ -199,11 +201,12 @@ def main() -> None:
             "closed_issues": "Issues closed (assigned)",
             "open_issues": "Open issues (assigned, updated in period)",
         }
+        statuses = fetch_statuses(it.get("url", "") for items in gh.values() for it in items)
         for key, label in labels.items():
             items = gh.get(key, [])
             print(f"## {label}: {len(items)}")
             for it in items:
-                print(_fmt_item(it))
+                print(_fmt_item(it, statuses))
             print()
     print(f"## Journal entries in period: {len(entries)}")
     for d, text in entries:

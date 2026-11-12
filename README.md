@@ -13,15 +13,17 @@ claude: Since Mon 00:00 · 2 merged, 15 open PRs
         • Search API docs for the v2 endpoints https://github.com/acme/docs/pull/38
 
         *In progress*
-        • Billing webhooks (retries, idempotency) — in review https://github.com/acme/billing/pull/80 https://github.com/acme/billing/pull/81
+        • Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 🟢 approved https://github.com/acme/billing/pull/81 🟡 in review
         ```
 you:    post status update
 claude: (shows the text) Post to your channel?   you: yes
 claude: Posted — https://your-workspace.slack.com/archives/C0…/p…
 ```
 
-Drafts use bare URLs so they paste cleanly into Slack; when the bot posts, GitHub
-links become short `repo#123` labels and link previews are turned off.
+Every GitHub link gets a live status tag (🟢 approved, 🟡 in review, 🔴 changes
+requested, ⚪ draft, 🟣 merged, 🔵 open + labels, ❌ CI). Drafts use bare URLs so they
+paste cleanly into Slack; the bot posts a Block Kit message (header, sections, status
+chips) with short `repo#123` links and no link previews.
 
 ## What it does
 
@@ -59,7 +61,8 @@ Cursor / project-level use: `bash scripts/sync-vendor-dirs.sh` symlinks
 - Secrets only in `.env` (gitignored) or env vars; `.env` is read from the journaling
   home only — never searched for in parent directories.
 - Network: fixed `https://slack.com/api/` endpoints (`chat.postMessage`,
-  `chat.getPermalink`, `conversations.history`) and read-only `gh search`.
+  `chat.getPermalink`, `conversations.history`) and read-only `gh search` /
+  `gh api graphql` (PR/issue status, URLs passed as variables).
 - File arguments are confined to the journaling home; scripts never print tokens or
   raw API responses.
 - Posting always shows the exact text and channel first.

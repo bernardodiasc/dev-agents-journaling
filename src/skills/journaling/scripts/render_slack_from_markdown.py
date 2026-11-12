@@ -7,6 +7,7 @@ Conversion rules (Slack mrkdwn, not GitHub Markdown):
   - ``#``/``##``/``###`` headings  → ``*text*`` on its own line (inner ``**`` / ``__`` stripped first)
   - ``[label](url)``               → ``<url|label>`` (before bold / bare URL)
   - Bare GitHub PR/issue URLs      → ``<url|repo#123>`` (short, clickable label)
+  - Bare GitHub commit URLs        → ``<url|repo@abc1234>``
   - Other bare URLs                → ``<url>`` (before ``**`` → ``*`` so ``**https://…**`` does not break)
   - ``**bold**``                   → ``*bold*``
   - ``__bold__``                   → ``*bold*``
@@ -41,6 +42,9 @@ _BARE_URL = re.compile(r"(?<![<\w/|])https?://[^\s<>)`]+(?<!\*)")
 _GITHUB_ITEM = re.compile(
     r"^https://github\.com/[\w.-]+/([\w.-]+)/(?:pull|issues)/(\d+)(?:[/?#][^\s]*)?$"
 )
+_GITHUB_COMMIT = re.compile(
+    r"^https://github\.com/[\w.-]+/([\w.-]+)/commit/([0-9a-fA-F]{7,40})(?:[/?#][^\s]*)?$"
+)
 _TRAILING_PUNCT = ".,;:!?"
 _INLINE_CODE = re.compile(r"(`[^`]*`)")
 
@@ -59,6 +63,9 @@ def _bare_url_to_slack(match: re.Match) -> str:
     gh = _GITHUB_ITEM.match(url)
     if gh:
         return f"<{url}|{gh.group(1)}#{gh.group(2)}>{tail}"
+    commit = _GITHUB_COMMIT.match(url)
+    if commit:
+        return f"<{url}|{commit.group(1)}@{commit.group(2)[:7].lower()}>{tail}"
     return f"<{url}>{tail}"
 
 

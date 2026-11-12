@@ -18,8 +18,28 @@ Avoid `#` headings and `>` quotes in updates; Slack shows `#` literally.
 
 - Drafts the user will paste: bare URLs at the end of the line. Slack auto-links them.
 - Bot posts: `post_slack_message.py` rewrites bare GitHub PR/issue URLs to
-  `<url|repo#123>` and leaves other URLs as `<url>`. Existing `<…>` links and code are
-  untouched. Unfurls are off.
+  `<url|repo#123>`, commit URLs to `<url|repo@abc1234>`, and other URLs to `<url>`.
+  Existing `<…>` links and code are untouched. Unfurls are off.
+
+## Status tags (`status_render.py`)
+
+Appended after every GitHub URL from a live GraphQL lookup:
+
+| PR | Issue |
+|---|---|
+| 🟢 approved · 🟡 in review · 🔴 changes requested · ⚪ draft · 🟣 merged · ⚫ closed | 🔵 open · ✅ closed · ⚫ not planned |
+
+Plus `❌ CI` for open PRs with failing checks and up to 3 labels as `` `label` ``.
+Re-rendering strips old tags first, so statuses are always current at post time.
+
+## Block Kit (status update posts)
+
+`post_slack_message.py --status-update` sends `blocks` + fallback `text`:
+header (first `*line*`) → optional grey context line (`--context`) → per section a
+divider and `*Title*` → per item a section (`• text`) and a context block with status
+chips (`🟢 <url|agents#11> approved`). Paragraphs become plain sections. Over 50
+blocks it falls back to one section per group. Block Kit only exists in bot posts;
+pasted drafts stay as tagged mrkdwn.
 
 ## Mentions and IDs
 

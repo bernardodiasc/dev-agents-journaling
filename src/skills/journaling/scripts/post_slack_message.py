@@ -7,8 +7,10 @@ its presence indicates the file was posted.
 Inline / stdin / non-``.md`` bodies are treated as Slack mrkdwn already; bare GitHub
 PR/issue URLs are turned into short ``<url|repo#123>`` links before posting.
 
-``--status-update`` additionally saves the posted text to
-``updates/status-<UTC timestamp>.slack.txt`` — the next status update starts from there.
+``--status-update`` posts a Block Kit message (header, sections, a status chip per
+GitHub link, looked up live) with the tagged mrkdwn as notification fallback, and saves
+it to ``updates/status-<UTC timestamp>.slack.txt`` (+ ``.blocks.json``) — the next
+status update starts from there. ``--no-blocks`` posts the tagged text only.
 
 Link previews (unfurls) are disabled: status updates are link-heavy and one preview
 card per PR would bury the message.
@@ -45,6 +47,7 @@ from _shared.script_utils import (
 )
 
 from render_slack_from_markdown import render_markdown_to_slack, slackify_links  # noqa: E402
+from status_render import render_payload  # noqa: E402
 
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 SLACK_PERMALINK_URL = "https://slack.com/api/chat.getPermalink"
@@ -79,6 +82,7 @@ def send_message(
     message: str,
     channel: str,
     thread_ts: str | None = None,
+    blocks: list | None = None,
 ) -> dict:
     payload: dict[str, object] = {
         "channel": channel,
@@ -88,6 +92,8 @@ def send_message(
     }
     if thread_ts:
         payload["thread_ts"] = thread_ts
+    if blocks:
+        payload["blocks"] = blocks
 
     data = json.dumps(payload).encode()
     req = Request(
@@ -232,6 +238,16 @@ def main() -> None:
         "(marks the start of the next status update period).",
     )
     parser.add_argument(
+        "--no-blocks",
+        action="store_true",
+        help="With --status-update: post tagged mrkdwn text instead of Block Kit.",
+    )
+    parser.add_argument(
+        "--context",
+        default=None,
+        help="With --status-update: small grey line under the header (e.g. period + counts).",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Render (if .md) but do not post; prints the body that would be sent.",
@@ -249,7 +265,24 @@ def main() -> None:
     validate_token_env_var(args.token_var)
     repo = find_journaling_repo_root(Path(__file__))
 
-    text, pending_sibling = _resolve_body(repo, args)
+    if args.status_update and args.file and args.file.lower().endswith(".md"):
+        sys.exit("ERROR: --status-update takes the draft as text/stdin, not a .md file.")
+    if args.status_update and args.message:
+        raw_draft = args.message
+    elif args.status_update and not args.file and not sys.stdin.isatty():
+        raw_draft = sys.stdin.read()
+    else:
+        raw_draft = None
+
+    blocks = None
+    if raw_draft is not None:
+        if len(raw_draft) > MAX_READ_BYTES_FOR_SLACK_POST:
+            sys.exit("ERROR: draft too large.")
+        payload = render_payload(raw_draft, context=args.context)
+        text, pending_sibling = payload["text"], None
+        blocks = None if args.no_blocks else payload["blocks"]
+    else:
+        text, pending_sibling = _resolve_body(repo, args)
 
     user_id = load_optional_install_config("JOURNALING_SLACK_USER_ID", start=repo)
     if args.prepend_user_mention:
@@ -274,7 +307,10 @@ def main() -> None:
             payload = {"ok": True, "dry_run": True}
             if pending_sibling is not None:
                 payload["would_render"] = str(pending_sibling.relative_to(repo))
-            print(json.dumps(payload))
+            if blocks:
+                payload["blocks"] = blocks
+                payload["text"] = text
+            print(json.dumps(payload, ensure_ascii=False))
         else:
             if pending_sibling is not None:
                 print(
@@ -282,13 +318,15 @@ def main() -> None:
                     file=sys.stderr,
                 )
             print(text)
+            if blocks:
+                print(f"(dry-run) + {len(blocks)} Block Kit blocks (use --json to see them)", file=sys.stderr)
         return
 
     channel = _resolve_channel(args, repo)
     validate_channel_id(channel)
     _validate_thread_ts(args.thread_ts)
     token = load_token(args.token_var)
-    result = send_message(token, text, channel, args.thread_ts)
+    result = send_message(token, text, channel, args.thread_ts, blocks)
 
     if result.get("ok"):
         ts = result.get("ts", "")
@@ -301,6 +339,9 @@ def main() -> None:
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
             status_receipt = repo / "updates" / f"status-{stamp}.slack.txt"
             atomic_write_text(status_receipt, text)
+            if blocks:
+                atomic_write_text(status_receipt.with_name(status_receipt.name.replace(".slack.txt", ".blocks.json")),
+                                  json.dumps(blocks, ensure_ascii=False, indent=2))
         permalink = get_permalink(token, channel_out, ts) if ts else None
         if args.json:
             payload = {"ok": True, "channel": channel_out, "ts": ts, "permalink": permalink}
