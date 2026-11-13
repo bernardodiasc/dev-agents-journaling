@@ -27,9 +27,9 @@ Appended after every GitHub URL from a live GraphQL lookup:
 
 | PR | Issue |
 |---|---|
-| 🟢 approved · 🟡 in review · 🔴 changes requested · ⚪ draft · 🟣 merged · ⚫ closed | 🔵 open · ✅ closed · ⚫ not planned |
+| 🟢 approved · 🟡 in review · 🔴 changes requested · ⚪ draft · 🟣 merged · ⚫ closed | 🔵 open · 🟣 completed · ⚫ not planned |
 
-Plus `❌ CI` for open PRs with failing checks and up to 3 labels as `` `label` ``.
+Plus `🟠 CI failing` for open PRs with failing checks and up to 3 labels as `` `label` ``. Every status is a circle in GitHub's colors; states sharing a circle share one legend entry (`🟣 merged/completed`).
 Re-rendering strips old tags first, so statuses are always current at post time.
 
 ## Block Kit (status update posts)
@@ -40,8 +40,8 @@ handful of blocks so it reads like a normal message:
 1. `header` — the first `*line*` of the draft
 2. `context` — `--context` (period + counts)
 3. `rich_text` — bold section titles and `rich_text_list` bullets; each GitHub link is
-   `repo#12` followed by its status dot (`🟡`), `❌ CI` and `label`s in code style
-   (paragraphs in the draft become plain `section` blocks in between)
+   `repo#12` followed by its status circle (`🟡`), `🟠` for failing CI and `label`s in code style
+   (paragraphs such as a context line render the same way, inside the list block)
 4. `context` — legend of only the statuses that appear (`🟣 merged   🟡 in review`)
 
 Block Kit only exists in bot posts; pasted drafts stay as tagged mrkdwn (with words).

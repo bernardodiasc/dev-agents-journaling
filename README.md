@@ -21,7 +21,7 @@ claude: Posted — https://your-workspace.slack.com/archives/C0…/p…
 ```
 
 Every GitHub link gets a live status tag (🟢 approved, 🟡 in review, 🔴 changes
-requested, ⚪ draft, 🟣 merged, 🔵 open + labels, ❌ CI). Drafts use bare URLs so they
+requested, ⚪ draft, 🟣 merged/completed, 🔵 open + labels, 🟠 CI failing). Drafts use bare URLs so they
 paste cleanly into Slack; the bot posts a Block Kit message (header, sections, status
 chips) with short `repo#123` links and no link previews.
 

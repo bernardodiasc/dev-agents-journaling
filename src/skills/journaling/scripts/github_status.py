@@ -19,6 +19,9 @@ GH_TIMEOUT_SECONDS = 30
 BATCH = 40
 MAX_LABELS = 3
 
+# One circle per meaning (GitHub's colors). Same color = same legend entry.
+CI_FAILING = ("🟠", "CI failing")
+
 GITHUB_URL = re.compile(
     r"https://github\.com/([A-Za-z0-9][\w.-]*)/([\w.-]+)/"
     r"(?:(pull|issues)/(\d+)|commit/([0-9a-fA-F]{7,40}))"
@@ -46,12 +49,12 @@ class ItemStatus:
     author: str = ""
 
     def tag(self) -> str:
-        """``🟢 approved ❌ CI `label``` (empty for commits)."""
+        """``🟢 approved 🟠 CI failing `label``` (empty for commits)."""
         parts = []
         if self.state:
             parts.append(f"{self.emoji} {self.state}".strip())
         if self.ci_failing:
-            parts.append("❌ CI")
+            parts.append(" ".join(CI_FAILING))
         parts += [f"`{lbl}`" for lbl in self.labels]
         return " ".join(parts)
 
@@ -113,7 +116,7 @@ def _issue_status(node: dict, label: str) -> ItemStatus:
     elif node.get("stateReason") == "NOT_PLANNED":
         emoji, state = "⚫", "not planned"
     else:
-        emoji, state = "✅", "closed"
+        emoji, state = "🟣", "completed"
     return ItemStatus(kind="issue", label=label, emoji=emoji, state=state, labels=_labels(node), **_meta(node))
 
 

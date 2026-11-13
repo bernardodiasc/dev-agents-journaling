@@ -63,7 +63,7 @@ short question beats a checklist. The user found the old ask-everything flow ted
    EOF
    ```
    It appends `🟢 approved` / `🟡 in review` / `🔴 changes requested` / `⚪ draft` /
-   `🟣 merged` / `🔵 open` / `✅ closed`, `❌ CI` when checks fail, and up to 3
+   `🟣 merged` / `🔵 open` / `🟣 completed`, `🟠 CI failing` when checks fail, and up to 3
    labels as `` `label` `` after every GitHub URL. Statuses come from GitHub, never
    from you — don't hand-type them. It also saves the draft to `updates/draft.txt`,
    so "post status update" later — in this or any other session — posts this exact
@@ -106,7 +106,7 @@ Draft (what you write):
 After `status_render.py` (what the user sees and pastes):
 
 ```
-• Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 🟢 approved https://github.com/acme/billing/pull/81 🔴 changes requested ❌ CI
+• Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 🟢 approved https://github.com/acme/billing/pull/81 🔴 changes requested 🟠 CI failing
 • Invoice export job https://github.com/acme/billing/issues/5 🔵 open `billing` `q4`
 ```
 

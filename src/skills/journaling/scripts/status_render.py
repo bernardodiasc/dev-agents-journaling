@@ -9,7 +9,7 @@ The draft is plain Slack mrkdwn with bare URLs (what Claude writes):
     • Sandbox MVP agents https://github.com/o/agents/pull/11 https://github.com/o/agents/pull/12
 
 Every GitHub PR / issue / commit URL gets a status tag looked up live (see
-``github_status.py``), e.g. ``🟢 approved``, ``🔵 open `wayfinder:map```, ``❌ CI``.
+``github_status.py``), e.g. ``🟢 approved``, ``🔵 open `wayfinder:map```, ``🟠 CI failing``.
 Existing tags are stripped first, so re-rendering an already-tagged draft refreshes
 the statuses instead of duplicating them.
 
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from github_status import GITHUB_URL, ItemStatus, canonical, fetch_statuses, short_label  # noqa: E402
+from github_status import CI_FAILING, GITHUB_URL, ItemStatus, canonical, fetch_statuses, short_label  # noqa: E402
 from render_slack_from_markdown import slackify_links  # noqa: E402
 from _shared.journaling_repo import find_journaling_repo_root  # noqa: E402
 from _shared.path_guard import atomic_write_text, read_text_limited  # noqa: E402
@@ -59,12 +59,13 @@ MAX_BLOCKS = 50
 SECTION_MAX = 2900
 HEADER_MAX = 150
 
-_STATUS_WORDS = r"(?:approved|in review|changes requested|draft|merged|closed|open|not planned)"
+_STATUS_WORDS = r"(?:approved|in review|changes requested|draft|merged|completed|closed|open|not planned)"
 _STATUS_EMOJI = r"(?:🟢|🟡|🔴|⚪|🟣|⚫|🔵|✅)"
+_CI_TAG = r"(?:🟠 CI failing|❌ CI)"
 _URL_WITH_TAG = re.compile(
     r"(?P<url>" + GITHUB_URL.pattern + r"[^\s<>)`]*)"
     r"(?P<tag>(?:[ \t]+" + _STATUS_EMOJI + r"[ \t]+" + _STATUS_WORDS + r")"
-    r"(?:[ \t]+❌ CI)?(?:[ \t]+`[^`\n]+`)*|[ \t]+❌ CI(?:[ \t]+`[^`\n]+`)*)?"
+    r"(?:[ \t]+" + _CI_TAG + r")?(?:[ \t]+`[^`\n]+`)*|[ \t]+" + _CI_TAG + r"(?:[ \t]+`[^`\n]+`)*)?"
 )
 _TITLE = re.compile(r"^\*([^*\n]+)\*\s*$")
 _BULLET = re.compile(r"^\s*[•\-]\s+(.*)$")
@@ -96,7 +97,7 @@ def annotate(text: str, statuses: dict[str, ItemStatus], *, style: str = "bare")
         url, tail = _split_url(m.group("url"))
         st = statuses.get(canonical(url) or "")
         tag = st.tag() if st else ""
-        return _link(url, st, style) + tail + (f" {tag}" if tag else "")
+        return _link(url, st, style) + (f" {tag}" if tag else "") + tail
 
     out = _URL_WITH_TAG.sub(sub, text)
     return slackify_links(out) if style == "slack" else out
@@ -124,9 +125,11 @@ _INLINE = re.compile(
     r"|(?<![\w_])_(?P<ital>[^_\n]+)_(?![\w_])"
     r"|(?<![\w~])~(?P<strike>[^~\n]+)~(?![\w~])"
 )
-# Legend order for the footer; only statuses that appear in the post are listed.
-_LEGEND = ["🟣 merged", "🟢 approved", "🟡 in review", "🔴 changes requested", "⚪ draft",
-           "⚫ closed", "🔵 open", "✅ closed", "⚫ not planned"]
+# Legend order (by circle); only circles that appear in the post are listed, and
+# states sharing a circle share one entry ("🟣 merged/completed").
+_LEGEND_ORDER = ["🟣", "🟢", "🟡", "🔴", "⚪", "🔵", "⚫", "🟠"]
+_WORD_ORDER = ["merged", "completed", "approved", "in review", "changes requested", "draft",
+               "open", "closed", "not planned", "CI failing"]
 
 
 def _txt(text: str, **style) -> dict:
@@ -169,27 +172,37 @@ def _rich_inline(text: str) -> list[dict]:
 
 
 def _link_elements(url: str, st: ItemStatus | None, used: set[str]) -> list[dict]:
-    """``repo#12 🟡`` (+ ``❌ CI`` + `label`s) as rich_text elements."""
+    """``repo#12 🟡`` (+ ``🟠`` for failing CI + `label`s) as rich_text elements."""
 
     label = (st.label if st else None) or short_label(url) or url
     els: list[dict] = [{"type": "link", "url": url, "text": label}]
     if st and st.state:
         els.append(_txt(f" {st.emoji}"))
-        used.add(f"{st.emoji} {st.state}")
+        used.add((st.emoji, st.state))
     if st and st.ci_failing:
-        els.append(_txt(" ❌ CI"))
-        used.add("❌ CI failing")
+        els.append(_txt(f" {CI_FAILING[0]}"))
+        used.add(CI_FAILING)
     for lbl in (st.labels if st else []):
         els += [_txt(" "), _txt(lbl, code=True)]
     return els
 
 
-def _item_text(line: str) -> tuple[str, list[str]]:
-    urls = github_urls(line)
-    text = _URL_WITH_TAG.sub("", line)
-    text = re.sub(r"\s{2,}", " ", text).strip()
-    text = re.sub(r"\s*[—-]\s*$", "", text)  # dangling "—" left after removing links
-    return text, urls
+def _line_elements(line: str, statuses: dict[str, ItemStatus], used: set) -> list[dict]:
+    """A draft line as rich_text elements; each GitHub URL (and any stale tag after it)
+    becomes ``repo#12 🟡`` right where it was, so bullets and paragraphs look alike."""
+
+    els: list[dict] = []
+    pos = 0
+    for m in _URL_WITH_TAG.finditer(line):
+        els += _rich_inline(line[pos:m.start()])
+        url, tail = _split_url(m.group("url"))
+        els += _link_elements(url, statuses.get(canonical(url) or ""), used)
+        if tail:
+            els.append(_txt(tail))
+        pos = m.end()
+    els += _rich_inline(line[pos:])
+    els = [e for e in els if e.get("type") != "text" or e.get("text")]
+    return els or [_txt(" ")]
 
 
 def build_blocks(draft: str, statuses: dict[str, ItemStatus], *, context: str | None = None) -> list[dict]:
@@ -216,8 +229,10 @@ def build_blocks(draft: str, statuses: dict[str, ItemStatus], *, context: str | 
 
     def flush_para():
         if para:
-            flush_rich()
-            blocks.append(_section(annotate("\n".join(para), statuses, style="slack")))
+            flush_bullets()
+            for i, ln in enumerate(para):
+                lead = [_txt("\n")] if (rich and i == 0) else ([_txt("\n")] if i else [])
+                rich.append({"type": "rich_text_section", "elements": lead + _line_elements(ln, statuses, used)})
             para.clear()
 
     for raw in draft.splitlines():
@@ -244,19 +259,17 @@ def build_blocks(draft: str, statuses: dict[str, ItemStatus], *, context: str | 
         bullet = _BULLET.match(line)
         if bullet:
             flush_para()
-            text, urls = _item_text(bullet.group(1))
-            els = _rich_inline(text)
-            for i, u in enumerate(urls):
-                els.append(_txt("  " if (i or text) else ""))
-                els += _link_elements(u, statuses.get(canonical(u) or ""), used)
-            els = [e for e in els if e.get("type") != "text" or e.get("text")]
-            bullets.append({"type": "rich_text_section", "elements": els or [_txt(" ")]})
+            bullets.append({"type": "rich_text_section",
+                            "elements": _line_elements(bullet.group(1), statuses, used)})
             continue
         para.append(line)
     flush_para()
     flush_rich()
 
-    legend = [x for x in _LEGEND if x in used] + (["❌ CI failing"] if "❌ CI failing" in used else [])
+    by_circle: dict[str, list[str]] = {}
+    for emoji, word in sorted(used, key=lambda u: _WORD_ORDER.index(u[1]) if u[1] in _WORD_ORDER else 99):
+        by_circle.setdefault(emoji, []).append(word)
+    legend = [f"{e} {'/'.join(by_circle[e])}" for e in _LEGEND_ORDER if e in by_circle]
     if legend:
         blocks += _context(["   ".join(legend)])
 
