@@ -33,6 +33,7 @@ chips) with short `repo#123` links and no link previews.
 | "post status update" | One confirmation, then posts to your channel via your Slack bot |
 | "log that I merged #412" | Appends to `entries/YYYY-MM-DD.md` |
 | "plan my day" | Catch-up + suggested focus → `plans/` |
+| "start today's coordinator" / "hand off to tomorrow" | A daily coordinator session with one subsession per deliverable, status emoji on titles, and a handoff → `plans/` |
 | "pull #team from yesterday" | Slack history → `context/` |
 | "manager report for last two weeks" | manager / self / team / qa reports → `reports/` |
 
@@ -65,6 +66,9 @@ Cursor / project-level use: `bash scripts/sync-vendor-dirs.sh` symlinks
   `gh api graphql` (PR/issue status, URLs passed as variables).
 - File arguments are confined to the journaling home; scripts never print tokens or
   raw API responses.
-- Posting always shows the exact text and channel first.
+- Nothing goes out (Slack posts, PR/issue comments, reviews, pushes) without showing
+  the exact text or diff and getting a yes.
+- The skill tells Claude to leave data queries to you (it writes aggregate-only SQL)
+  and to use invented placeholders in anything public.
 
 Details: [`references/setup.md`](src/skills/journaling/references/setup.md).

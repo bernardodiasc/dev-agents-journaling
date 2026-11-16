@@ -12,6 +12,9 @@ Data dirs (created automatically, gitignored): `entries/`, `plans/`, `reports/`,
 `context/`, `updates/`. `.env` is read **only** from the home — never searched for
 in parent directories.
 
+Per-user preferences (preferred review/implement skill, tracking issues, people to
+ask) go in `context/preferences.md`, also gitignored. Format: `references/workload.md`.
+
 ## Install (Claude Code, user-level)
 
 ```bash

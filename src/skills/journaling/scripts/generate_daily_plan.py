@@ -1,5 +1,9 @@
 """Generate a daily planning brief from recent journal entries and optional Slack context.
 
+With ``--stdin``, saves Markdown written elsewhere (a finished plan or a handoff)
+instead of generating the brief. The script resolves the journaling home itself, so
+this works from any session, including one running in a git worktree of the repo.
+
 Writes Markdown only. The Slack-mrkdwn sibling (``.slack.txt``) is produced at
 post-time by ``post_slack_message.py`` — its presence means the plan was delivered.
 """
@@ -135,6 +139,14 @@ def main() -> None:
         help="Write plan to an explicit file inside repo (mutually exclusive with --save).",
     )
     parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help=(
+            "Read the plan Markdown from stdin and save it as-is instead of generating "
+            "the brief (needs --save or --output)."
+        ),
+    )
+    parser.add_argument(
         "--save",
         action="store_true",
         help=(
@@ -148,18 +160,30 @@ def main() -> None:
         sys.exit("ERROR: --lookback must be a positive integer.")
     if args.output and args.save:
         sys.exit("ERROR: use --output or --save, not both.")
+    if args.stdin and not (args.save or args.output):
+        sys.exit("ERROR: --stdin needs --save or --output.")
+    if args.stdin and (args.context_file or args.slack_context_file):
+        sys.exit("ERROR: --stdin saves the body as given; put context in the body instead.")
 
     repo = find_journaling_repo_root(Path(__file__))
-    entries = _load_entries(repo, args.lookback)
     today = str(date.today())
 
-    ctx_arg = args.context_file or args.slack_context_file
-    slack_context: str | None = None
-    if ctx_arg:
-        ctx_path = resolve_under_repo(repo, ctx_arg)
-        slack_context = read_text_limited(ctx_path, max_bytes=MAX_READ_BYTES)
-
-    rendered = _render_markdown(entries, slack_context, today)
+    if args.stdin:
+        rendered = sys.stdin.read()
+        if len(rendered.encode("utf-8")) > MAX_READ_BYTES:
+            sys.exit(f"ERROR: stdin exceeds {MAX_READ_BYTES} bytes.")
+        if not rendered.strip():
+            sys.exit("ERROR: --stdin got an empty body; nothing saved.")
+        if not rendered.endswith("\n"):
+            rendered += "\n"
+    else:
+        entries = _load_entries(repo, args.lookback)
+        ctx_arg = args.context_file or args.slack_context_file
+        slack_context: str | None = None
+        if ctx_arg:
+            ctx_path = resolve_under_repo(repo, ctx_arg)
+            slack_context = read_text_limited(ctx_path, max_bytes=MAX_READ_BYTES)
+        rendered = _render_markdown(entries, slack_context, today)
 
     if args.save:
         md_path = resolve_write_path_under_repo(repo, f"plans/plan-{today}.md")

@@ -5,8 +5,9 @@ description: >-
   draft, write, preview, or post a status update / standup / progress update / weekly
   update to Slack ("draft status update", "post status update", "what did I ship
   since yesterday", "standup for today"), log or capture what they did ("log that I
-  merged #412"), plan their day, pull Slack channel context, or generate period
-  reports from their journal. Pulls GitHub PR/issue activity via gh so updates carry
+  merged #412"), plan their day, run it as a coordinator session with subsessions
+  and a daily handoff, pull Slack channel context, or generate period reports from
+  their journal. Pulls GitHub PR/issue activity via gh so updates carry
   links readers can follow up on. Use it even if they don't say "journal" — any
   request to summarize their recent work for Slack belongs here.
 ---
@@ -31,6 +32,7 @@ from any directory.
 | "post status update", "send it", "post that" | **Post** flow below |
 | "log/capture that I …" | Append to today's entry — see `references/capture.md` |
 | "plan my day", "catch me up" | `references/plan.md` |
+| "start today's coordinator", "hand off to tomorrow", "conclude yesterday's sessions" | `references/workload.md` |
 | "pull #channel context", "save this ticket link" | `references/context.md` |
 | "report for the last two weeks", manager/team/qa report | `references/reports.md` |
 | Setup, tokens, channels, errors | `references/setup.md` |
@@ -178,6 +180,24 @@ If posting fails, relay the short error and the fix from `references/setup.md`
 
 ## Security notes
 
+These hold in every flow and every subsession, without the user repeating them.
+
+- **Approval gate.** Anything that leaves this machine waits for the user's explicit
+  yes: Slack posts, PR and issue comments, reviews, reviewer requests, label or issue
+  edits, ready-for-review, pushes. Show the exact text or diff and its target, ask
+  once, act on yes. Each yes covers that one action.
+- **The user runs data queries.** For warehouse or database questions, write
+  aggregate-only SQL (counts and sums, no row-level personal data) for the user to
+  run, and work from the output they paste. Credentials stay where they are: read
+  only the `.env` the scripts use, and never search for keys, tokens or credential
+  files.
+- **Public writing uses placeholders.** Anything public (open-source repos, this
+  skill's included; blog posts; channels outside the org) uses invented names:
+  `acme`, Alice, `repo#12`. No real company, client or people's names, internal
+  repo/issue/PR numbers, Slack IDs, table names, data or business decisions. Real
+  details stay in the journaling home's gitignored dirs (`entries/`, `plans/`,
+  `updates/`, `context/`, `reports/`). Before committing to a public repo, scan the
+  diff for leaks.
 - Tokens only come from env vars or `<journaling home>/.env`; never echo them, never
   put them in commands or files.
 - Scripts only talk to fixed `https://slack.com/api/...` endpoints and to read-only
