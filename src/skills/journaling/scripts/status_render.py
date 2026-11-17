@@ -15,11 +15,14 @@ the statuses instead of duplicating them.
 
 The paste-mode render also saves the draft to ``updates/draft.txt`` so a later
 "post status update" — even from another session — posts exactly this draft
-(``--saved`` prints it, freshly tagged, if it is newer than the last posted update).
+(``--saved`` prints it, freshly tagged). A post clears it only when the posted text
+is that draft (compared without status tags), so posting one session's update never
+wipes another session's pending draft. ``--discard`` clears it by hand.
 
 Usage:
     status_render.py < draft.txt                 # tagged paste text (bare URLs), saves draft
     status_render.py --saved                     # print the pending saved draft (exit 2 if none)
+    status_render.py --discard                   # delete the saved draft
     status_render.py --blocks --context "Since Wed 11:34 · 1 merged" < draft.txt   # JSON payload
 """
 
@@ -45,13 +48,10 @@ def draft_path() -> Path:
 
 
 def pending_draft() -> str | None:
-    """The saved draft if it is newer than the last posted update, else None."""
+    """The saved draft, or None. Posting that draft deletes it (``settle_saved_draft``)."""
 
     p = draft_path()
     if not p.is_file():
-        return None
-    posted = [f.stat().st_mtime for f in p.parent.glob("status-*.slack.txt")]
-    if posted and max(posted) >= p.stat().st_mtime:
         return None
     return read_text_limited(p, max_bytes=200_000)
 
@@ -101,6 +101,34 @@ def annotate(text: str, statuses: dict[str, ItemStatus], *, style: str = "bare")
 
     out = _URL_WITH_TAG.sub(sub, text)
     return slackify_links(out) if style == "slack" else out
+
+
+_SLACK_LINK = re.compile(r"<(https?://[^|>\s]+)\|[^>]*>")
+
+
+def normalize_draft(text: str) -> str:
+    """The draft without status tags, Slack link labels or trailing whitespace, so a
+    draft and its tagged render (bare or ``<url|repo#12>`` style) compare equal."""
+
+    bare = annotate(_SLACK_LINK.sub(r"\1", text), {})
+    return "\n".join(line.rstrip() for line in bare.strip().splitlines())
+
+
+def settle_saved_draft(posted: str) -> bool:
+    """After a successful post: delete the saved draft if ``posted`` is that draft.
+
+    Returns True when a *different* saved draft is still pending (another session's,
+    or an earlier version of this update), which the caller reports.
+    """
+
+    p = draft_path()
+    if not p.is_file():
+        return False
+    saved = read_text_limited(p, max_bytes=200_000)
+    if normalize_draft(saved) == normalize_draft(posted):
+        p.unlink()
+        return False
+    return True
 
 
 # --------------------------------------------------------------------------- blocks
@@ -294,8 +322,17 @@ def main() -> None:
     ap.add_argument("--context", default=None, help="Small grey line under the header (blocks only).")
     ap.add_argument("--saved", action="store_true", help="Use the pending saved draft instead of stdin.")
     ap.add_argument("--no-save", action="store_true", help="Don't save the draft to updates/draft.txt.")
+    ap.add_argument("--discard", action="store_true", help="Delete the saved draft and exit.")
     args = ap.parse_args()
 
+    if args.discard:
+        p = draft_path()
+        if p.is_file():
+            p.unlink()
+            print("Discarded the saved draft (updates/draft.txt).")
+        else:
+            print("No saved draft.")
+        return
     if args.saved:
         draft = pending_draft()
         if draft is None:

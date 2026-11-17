@@ -169,10 +169,15 @@ Why it looks like this, so you can handle cases the example doesn't cover:
    rich-text list — bold section titles, bullets with `repo#12 🟡` links — and a grey
    legend of the statuses used. The tagged mrkdwn text goes along as the notification
    fallback. It saves the post under `updates/` (start of the next period) and
-   clears the saved draft.
+   clears the saved draft, but only when the posted text is that draft (status tags
+   don't count). Another session's pending draft survives your post.
    Add `--no-blocks` for plain text, `--channel-name team` for an alias,
    `--thread-ts <ts>` to reply in a thread. Link previews are off.
-4. **Report back** in one line with the permalink the script prints.
+4. **Report back** in one line with the permalink the script prints. If it also
+   notes that a different saved draft is still pending, check it with `--saved`.
+   Is it an earlier version of the update you just posted? Then clear it with
+   `status_render.py --discard`. Otherwise it belongs to another session, so leave
+   it and mention it in that line.
 
 If posting fails, relay the short error and the fix from `references/setup.md`
 (usual suspects: missing `.env`, bot not invited to the channel, `not_in_channel`,

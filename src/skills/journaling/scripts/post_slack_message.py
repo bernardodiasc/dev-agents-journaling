@@ -47,7 +47,7 @@ from _shared.script_utils import (
 )
 
 from render_slack_from_markdown import render_markdown_to_slack, slackify_links  # noqa: E402
-from status_render import render_payload  # noqa: E402
+from status_render import render_payload, settle_saved_draft  # noqa: E402
 
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 SLACK_PERMALINK_URL = "https://slack.com/api/chat.getPermalink"
@@ -284,6 +284,7 @@ def main() -> None:
     else:
         text, pending_sibling = _resolve_body(repo, args)
 
+    posted_draft = raw_draft if raw_draft is not None else text  # before any mention
     user_id = load_optional_install_config("JOURNALING_SLACK_USER_ID", start=repo)
     if args.prepend_user_mention:
         if not user_id:
@@ -335,13 +336,14 @@ def main() -> None:
         if pending_sibling is not None:
             _write_sibling_receipt(pending_sibling, text)
         status_receipt = None
+        draft_pending = False
         if args.status_update:
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
             status_receipt = repo / "updates" / f"status-{stamp}.slack.txt"
             atomic_write_text(status_receipt, text)
-            stale_draft = repo / "updates" / "draft.txt"
-            if stale_draft.is_file():
-                stale_draft.unlink()  # consumed: the next draft starts fresh
+            # Clear the saved draft only if this post *was* it; another session's
+            # pending draft (or an earlier version of this one) stays put.
+            draft_pending = settle_saved_draft(posted_draft)
             if blocks:
                 atomic_write_text(status_receipt.with_name(status_receipt.name.replace(".slack.txt", ".blocks.json")),
                                   json.dumps(blocks, ensure_ascii=False, indent=2))
@@ -352,6 +354,8 @@ def main() -> None:
                 payload["rendered"] = str(pending_sibling.relative_to(repo))
             if status_receipt is not None:
                 payload["receipt"] = str(status_receipt.relative_to(repo))
+            if draft_pending:
+                payload["draft_pending"] = True
             print(json.dumps(payload))
         else:
             if pending_sibling is not None:
@@ -361,6 +365,9 @@ def main() -> None:
             print(f"Posted to <#{channel_out}> (ts={ts})")
             if permalink:
                 print(f"Link: {permalink}")
+            if draft_pending:
+                print("Note: a different saved draft is still pending in updates/draft.txt "
+                      "(status_render.py --saved shows it; --discard clears it).")
     else:
         error = result.get("error", "unknown")
         print(f"ERROR: Slack API returned error: {error}", file=sys.stderr)
