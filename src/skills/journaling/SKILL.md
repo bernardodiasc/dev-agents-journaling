@@ -31,7 +31,7 @@ from any directory.
 | "draft status update", "standup", "what did I do since…" | **Draft** flow below |
 | "post status update", "send it", "post that" | **Post** flow below |
 | "log/capture that I …" | Append to today's entry — see `references/capture.md` |
-| "plan my day", "catch me up" | `references/plan.md` |
+| "plan my day", "plan tomorrow", "catch me up" | `references/plan.md` |
 | "start today's coordinator", "hand off to tomorrow", "conclude yesterday's sessions" | `references/workload.md` |
 | "pull #channel context", "save this ticket link" | `references/context.md` |
 | "report for the last two weeks", manager/team/qa report | `references/reports.md` |

@@ -63,17 +63,26 @@ Write it at the end of the day, or first thing the next day if it was missed.
 1. **Walk** every subsession in the day's group. Record each one's state, emoji
    and what closes it.
 2. **✅ sessions:** list them for archiving and archive on the user's yes.
-3. **⏳ and 🙋 sessions:** carry each as a *conclude* item in the next handoff,
-   with what closes it. They stay with the coordinator that started them, which
-   keeps tracking them. The new day's plan only carries the conclude item.
+3. **⏳ and 🙋 sessions:** carry each into the next handoff, with what closes it.
+   The next coordinator takes over tracking them, whichever coordinator started
+   them, so the user only follows today's coordinator. Older coordinators stay
+   open but read-only until their children close: archiving a parent also archives
+   its idle children that have no PR of their own.
 4. **Staleness** counts working days only; weekends don't count. Waiting on someone
    is fine. The day's age alone is no reason to nudge.
 5. **No reviewer, no movement.** A ⏳ PR with no reviewer requested won't move by
    waiting (`gh pr view <url> --json reviewRequests`). Requesting one is a coordinator
    action, on the user's yes. It isn't a nudge.
-6. **Save** through the script (see `references/plan.md`), dated for the day it's for:
+6. **Save** through the script (see `references/plan.md`), dated for the day it's for.
+   The handoff is internal: session ids, tracking tables, archive lists. If the user
+   also wants the next day's plan ready, save it as a separate file with only the
+   actions ("What a plan says" in `references/plan.md`). That plan is what gets posted.
    ```bash
    python3 $SKILL/scripts/generate_daily_plan.py --stdin --output plans/handoff-2026-11-17.md <<'EOF'
+   ...
+   EOF
+   python3 $SKILL/scripts/generate_daily_plan.py --stdin --save --date next <<'EOF'
+   # Plan · Tue 17 Nov
    ...
    EOF
    ```

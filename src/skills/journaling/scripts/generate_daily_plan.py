@@ -39,8 +39,23 @@ def _bullets(section_text: str) -> list[str]:
     return _BULLET_RE.findall(section_text)
 
 
-def _load_entries(repo_root: Path, lookback_days: int) -> list[dict]:
+def _plan_date(value: str | None) -> date:
+    """The day the plan is for: today, ``next`` (next working day) or YYYY-MM-DD."""
     today = date.today()
+    if not value or value == "today":
+        return today
+    if value == "next":
+        d = today + timedelta(days=1)
+        while d.weekday() >= 5:  # Saturday, Sunday
+            d += timedelta(days=1)
+        return d
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        sys.exit(f"ERROR: --date takes today, next or YYYY-MM-DD, not {value!r}.")
+
+
+def _load_entries(repo_root: Path, lookback_days: int, today: date) -> list[dict]:
     entries = []
     for i in range(1, lookback_days + 1):
         d = today - timedelta(days=i)
@@ -150,9 +165,23 @@ def main() -> None:
         "--save",
         action="store_true",
         help=(
-            "Auto-save to plans/plan-YYYY-MM-DD.md "
+            "Auto-save to plans/plan-YYYY-MM-DD.md, dated by --date "
             "(mutually exclusive with --output)."
         ),
+    )
+    parser.add_argument(
+        "--date",
+        metavar="DAY",
+        default=None,
+        help=(
+            "Day the plan is for: today (default), next (next working day, for "
+            "planning ahead) or YYYY-MM-DD."
+        ),
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Allow --save/--output to overwrite an existing file.",
     )
     args = parser.parse_args()
 
@@ -166,7 +195,20 @@ def main() -> None:
         sys.exit("ERROR: --stdin saves the body as given; put context in the body instead.")
 
     repo = find_journaling_repo_root(Path(__file__))
-    today = str(date.today())
+    plan_day = _plan_date(args.date)
+    today = str(plan_day)
+
+    if args.save:
+        out_path = resolve_write_path_under_repo(repo, f"plans/plan-{today}.md")
+    elif args.output:
+        out_path = resolve_write_path_under_repo(repo, args.output)
+    else:
+        out_path = None
+    if out_path and out_path.exists() and not args.replace:
+        sys.exit(
+            f"ERROR: {out_path.relative_to(repo)} already exists. Pass --replace to "
+            "overwrite it, or --date for another day's plan."
+        )
 
     if args.stdin:
         rendered = sys.stdin.read()
@@ -177,7 +219,7 @@ def main() -> None:
         if not rendered.endswith("\n"):
             rendered += "\n"
     else:
-        entries = _load_entries(repo, args.lookback)
+        entries = _load_entries(repo, args.lookback, plan_day)
         ctx_arg = args.context_file or args.slack_context_file
         slack_context: str | None = None
         if ctx_arg:
@@ -185,12 +227,7 @@ def main() -> None:
             slack_context = read_text_limited(ctx_path, max_bytes=MAX_READ_BYTES)
         rendered = _render_markdown(entries, slack_context, today)
 
-    if args.save:
-        md_path = resolve_write_path_under_repo(repo, f"plans/plan-{today}.md")
-        atomic_write_text(md_path, rendered)
-        print(f"Wrote {md_path.relative_to(repo)}")
-    elif args.output:
-        out_path = resolve_write_path_under_repo(repo, args.output)
+    if out_path:
         atomic_write_text(out_path, rendered)
         print(f"Wrote {out_path.relative_to(repo)}")
     else:

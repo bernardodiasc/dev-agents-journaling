@@ -20,6 +20,40 @@ Two steps: show a catch-up, then save once the user is happy with it.
    ...
    EOF
    ```
+   Planning ahead ("plan tomorrow", the evening before): add `--date next` (the
+   next working day, so Friday plans Monday) or `--date YYYY-MM-DD`. Without it the
+   file is dated by the local clock, which is still the earlier day. Saving never
+   overwrites an existing file unless you pass `--replace`; use it only to replace
+   that same day's plan.
+
+## What a plan says
+
+A saved plan is the text that gets posted, so it follows the status update's rules
+(`SKILL.md`): Slack mrkdwn, one line per item, outcome first, bare links at the end.
+
+- **Only actions.** Sections `🙋 On me` / `⏳ Waiting on review` / `🔨 Next`, the
+  same emoji as the session titles. Drop any that would be empty.
+- **No history.** Earlier posts in the channel already carry what happened and why:
+  no "where things stand", no recap of yesterday, no reasons, no counts.
+- **Nothing internal.** Session ids, workflow notes, archive lists and the
+  coordinator's tracking tables go in `plans/handoff-YYYY-MM-DD.md`
+  (`references/workload.md`), never in the plan.
+- **Waiting items** collapse into one line of links. Their state is already in the
+  channel.
+
+```markdown
+# Plan · Tue 17 Nov
+
+## 🙋 On me
+- Answer review on the billing agents https://github.com/acme/agents/pull/12 https://github.com/acme/agents/pull/13
+- Search ranking brief review https://github.com/acme/docs/pull/89
+
+## ⏳ Waiting on review
+- https://github.com/acme/billing/pull/76 https://github.com/acme/billing/pull/36
+
+## 🔨 Next
+- Invoice export job https://github.com/acme/billing/issues/5
+```
 
 The script resolves the journaling home itself, which may be a different checkout
 from the session's working directory. In a git worktree, direct file writes to the
@@ -32,6 +66,8 @@ installed path): a copy inside a worktree of this repo treats that worktree as h
 | `--context-file PATH` | Embed a context file (Slack dump, link notes) |
 | `--stdin` | Save the Markdown piped in, as-is, instead of generating the brief |
 | `--save` / `--output PATH` | Write to `plans/plan-YYYY-MM-DD.md` / an explicit path in the journaling home (e.g. `plans/handoff-YYYY-MM-DD.md`) |
+| `--date DAY` | Day the plan is for: `today` (default), `next` (next working day) or `YYYY-MM-DD` |
+| `--replace` | Allow overwriting an existing file (refused by default) |
 
 Posting a plan: `post_slack_message.py --file plans/plan-YYYY-MM-DD.md` renders a
 `.slack.txt` sibling at post time; that sibling is the receipt that it was posted.
