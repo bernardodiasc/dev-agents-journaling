@@ -19,8 +19,15 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 - Review for: Alice, Bob
 ```
 
-When a choice depends on a preference that isn't there, ask once and suggest the
-user add the answer to that file.
+When a choice depends on a preference that isn't there, ask once, and on the user's
+yes save the answer through the script. It finds the journaling home like the other
+scripts, so it works from a worktree where direct writes to the main checkout are
+blocked, and it changes only that key's line.
+
+```bash
+python3 $SKILL/scripts/preferences.py --set "Review for" "Alice, Bob"
+python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args prints the file
+```
 
 ## The coordinator
 
