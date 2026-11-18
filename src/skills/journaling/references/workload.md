@@ -54,6 +54,12 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
 - **New work, new subsession.** Ask the user before reusing a session from another
   day, or a top-level session, for today's work. The app can't re-parent a session,
   so a reused one stays outside today's coordinator, and the user can't move it.
+- **Archived sessions stay archived.** Unarchive, message or read an archived
+  session only when the user asks to look in archived sessions. Work that comes back
+  (a reopened PR, a new review round, a follow-up) gets a new subsession, briefed
+  from GitHub, the handoff and the plan. Archiving stops a session and usually
+  removes its worktree, so a reopened one has no checkout and stale state; its long
+  transcript carries old assumptions GitHub has since replaced.
 - When `preferences.md` names a skill for this kind of work (review, implement,
   research…), the brief tells the subsession to invoke it.
 - A subsession only knows its brief, so every brief carries the approval gate,
@@ -119,7 +125,8 @@ issue unless the repo's docs allow agents to (SKILL.md, "Repo rules win").
 reality:
 
 1. For every open session in today's group and the ones carried over: read its
-   title and its last report.
+   title and its last report. Open sessions only: `list_sessions` leaves archived
+   ones out by default, so keep it that way.
 2. Check each claim against live GitHub (`gh pr view <url> --json
    state,reviewDecision,reviewRequests,latestReviews`). Sessions report what they
    believe; a report saying "Alice was asked to review" means nothing if
@@ -138,8 +145,8 @@ reality:
 
 Write it at the end of the day, or first thing the next day if it was missed.
 
-1. **Walk** every subsession in the day's group. Record each one's state, emoji
-   and what closes it.
+1. **Walk** every open subsession in the day's group (archived ones are out, as in
+   "Syncing the board"). Record each one's state, emoji and what closes it.
 2. **✅ sessions:** list them for archiving and archive on the user's yes.
 3. **⏳ and 🙋 sessions:** carry each into the next handoff, with what closes it.
    The next coordinator takes over tracking them, whichever coordinator started
