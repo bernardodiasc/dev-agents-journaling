@@ -16,8 +16,10 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 - Implement skill: tdd
 - Tracking issues: https://github.com/acme/roadmap/issues/1
 - Ask about billing: Alice
-- Review for: Alice, Bob
+- Review for: alice, bob-gh
 ```
+
+`Review for` takes GitHub logins: the plan lists their new PRs as reviews.
 
 When a choice depends on a preference that isn't there, ask once, and on the user's
 yes save the answer through the script. It finds the journaling home like the other
@@ -25,7 +27,7 @@ scripts, so it works from a worktree where direct writes to the main checkout ar
 blocked, and it changes only that key's line.
 
 ```bash
-python3 $SKILL/scripts/preferences.py --set "Review for" "Alice, Bob"
+python3 $SKILL/scripts/preferences.py --set "Review for" "alice, bob-gh"
 python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args prints the file
 ```
 

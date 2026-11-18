@@ -14,9 +14,10 @@ Two steps: show a catch-up, then save once the user is happy with it.
      ask once: "What's today's priority?" Put the answer in a `⭐ Priority`
      section at the top of the plan, and mark that item's session ⭐
      (`references/workload.md`).
-   - **Teammates' new PRs.** "Review requested from me" misses PRs opened with no
-     reviewer requested. Also list open PRs opened since the last plan by the people
-     in `Review for:` (`context/preferences.md`), and put them in 🙋 On me as reviews.
+   - **Reviews waiting on me.** `status_context.py` prints "PRs waiting on my
+     review": open PRs requesting the user, plus PRs opened in the period by the
+     GitHub logins in `Review for:` (`context/preferences.md`), since teammates
+     often request no reviewer. Each one goes in 🙋 On me as a review.
    ```bash
    python3 $SKILL/scripts/generate_daily_plan.py                 # last 7 days of entries
    python3 $SKILL/scripts/generate_daily_plan.py --lookback 3 --context-file context/slack-C0123456789-2026-11-10-to-2026-11-11.txt

@@ -34,6 +34,17 @@ def _find(prefs: dict[str, str], key: str) -> str | None:
     return next((k for k in prefs if k.casefold() == key.casefold()), None)
 
 
+def get_preference(repo: Path, key: str) -> str:
+    """One key's value from the home's preferences file, or "" when unset."""
+
+    path = repo / _REL_PATH
+    if not path.is_file():
+        return ""
+    prefs = _parse(read_text_limited(path, max_bytes=200_000))
+    k = _find(prefs, key)
+    return prefs[k] if k else ""
+
+
 def set_value(text: str, key: str, value: str) -> str:
     """Return ``text`` with ``key`` set to ``value``; other lines are untouched."""
 

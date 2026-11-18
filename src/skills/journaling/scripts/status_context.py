@@ -6,7 +6,10 @@ Prints a compact, model-friendly digest:
   2. GitHub activity for ``@me`` in that period (via the ``gh`` CLI, read-only):
      merged PRs, open PRs (draft / ready), PRs reviewed, issues closed, open issues
      assigned — each with title, ``owner/repo#N`` and URL.
-  3. Journal entries (``entries/YYYY-MM-DD.md``) that fall inside the period.
+  3. PRs waiting on my review: open ones requesting me (any age), plus non-draft PRs
+     opened in the period by the GitHub logins in ``Review for:`` in
+     ``context/preferences.md`` (teammates often request no reviewer).
+  4. Journal entries (``entries/YYYY-MM-DD.md``) that fall inside the period.
 
 Period start (``--since auto``, the default):
   - the timestamp of the newest ``updates/status-*.slack.txt`` (last posted update), else
@@ -32,6 +35,7 @@ from _shared.journaling_repo import find_journaling_repo_root
 from _shared.path_guard import read_text_limited
 from _shared.script_utils import load_optional_install_config
 from github_status import canonical, fetch_statuses
+from preferences import get_preference
 
 GH_TIMEOUT_SECONDS = 30
 GH_LIMIT = 50
@@ -210,6 +214,32 @@ def my_reviews(since: datetime, owners: list[str]) -> list[dict]:
     return sorted(out, key=lambda r: r["label"])
 
 
+def review_queue(since: datetime, owners: list[str], review_for: list[str]) -> list[dict]:
+    """Open PRs waiting on my review: requested from me, or new from people I review for."""
+
+    if shutil.which("gh") is None:
+        return []
+    stamp = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    scope = [a for o in owners for a in ("--owner", o)]
+    found: dict[str, str] = {}  # url -> why
+    for it in _gh_search("prs", ["--review-requested", "@me", "--state", "open", *scope]) or []:
+        found[str(it.get("url", ""))] = "review requested"
+    for login in review_for:
+        q = ["--author", login, "--state", "open", "--created", f">={stamp}", *scope]
+        for it in _gh_search("prs", q) or []:
+            if not it.get("isDraft"):
+                found.setdefault(str(it.get("url", "")), f"opened by @{login}")
+
+    statuses = fetch_statuses(found)
+    out = []
+    for url, why in found.items():
+        st = statuses.get(canonical(url) or "")
+        if st:
+            out.append({"url": url, "label": st.label, "title": st.title, "author": st.author,
+                        "why": why, "status": st.tag()})
+    return sorted(out, key=lambda r: r["label"])
+
+
 # --------------------------------------------------------------------------- journal
 
 def journal_entries(repo: Path, since: datetime) -> list[tuple[str, str]]:
@@ -248,12 +278,20 @@ def main() -> None:
     gh = "skipped (--no-github)" if args.no_github else github_activity(since, owners)
     entries = journal_entries(repo, since)
     reviews = None if args.no_github else my_reviews(since, owners)
+    review_for = []
+    for x in get_preference(repo, "Review for").split(","):
+        login = x.strip().lstrip("@")
+        if login and not _OWNER.fullmatch(login):
+            print(f"WARNING: 'Review for' wants GitHub logins; skipping {login!r}.", file=sys.stderr)
+        elif login:
+            review_for.append(login)
+    queue = None if args.no_github else review_queue(since, owners, review_for)
     now = datetime.now().astimezone()
 
     if args.json:
         print(json.dumps({
             "since": since.isoformat(), "until": now.isoformat(), "since_reason": reason,
-            "owners": owners, "github": gh, "reviews": reviews,
+            "owners": owners, "github": gh, "reviews": reviews, "review_queue": queue,
             "journal": [{"date": d, "text": t} for d, t in entries],
         }, indent=2))
         return
@@ -282,6 +320,11 @@ def main() -> None:
         print(f"## PRs I reviewed (others'): {len(reviews)}")
         for r in reviews:
             print(f"- {r['title']} [my review: {r['verdict']}] [PR: {r['status']}] — @{r['author']} — {r['label']} — {r['url']}")
+        print()
+    if queue is not None:
+        print(f"## PRs waiting on my review (open): {len(queue)}")
+        for r in queue:
+            print(f"- {r['title']} [{r['why']}] [PR: {r['status']}] — @{r['author']} — {r['label']} — {r['url']}")
         print()
     print(f"## Journal entries in period: {len(entries)}")
     for d, text in entries:
