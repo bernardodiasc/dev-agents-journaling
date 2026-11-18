@@ -188,7 +188,19 @@ Why it looks like this, so you can handle cases the example doesn't cover:
    don't count). Another session's pending draft survives your post.
    Add `--no-blocks` for plain text, `--channel-name team` for an alias,
    `--thread-ts <ts>` to reply in a thread. Link previews are off.
-4. **Report back** in one line with the permalink the script prints. If it also
+4. **Log it** to today's entry, in one call and without asking: posting is what
+   fills `entries/`, which reports and plans are built from. Each ✅ Done line is a
+   `--win`, each em-dash or 🚧 Blocked line a `--blocker`, each 🙋 Next line a
+   `--next-step`; keep the line's text and URLs, without status tags.
+   ```bash
+   python3 $SKILL/scripts/append_journal_entry.py --tag status-update \
+     --win "Search API docs for the v2 endpoints https://github.com/acme/docs/pull/38" \
+     --blocker "Staging deploy — waiting on DB grants from infra" \
+     --next-step "Answer Alice's review on the export job https://github.com/acme/billing/pull/77"
+   ```
+   A later draft the same day reads these again; "Only what changed since the last
+   post" keeps them out of it.
+5. **Report back** in one line with the permalink the script prints. If it also
    notes that a different saved draft is still pending, check it with `--saved`.
    Is it an earlier version of the update you just posted? Then clear it with
    `status_render.py --discard`. Otherwise it belongs to another session, so leave

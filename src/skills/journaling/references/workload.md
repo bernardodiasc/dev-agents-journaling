@@ -16,6 +16,7 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 - Implement skill: tdd
 - Tracking issues: https://github.com/acme/roadmap/issues/1
 - Ask about billing: Alice
+- Review for: Alice, Bob
 ```
 
 When a choice depends on a preference that isn't there, ask once and suggest the
@@ -33,12 +34,18 @@ user add the answer to that file.
   2. Run the plan flow (`references/plan.md`) with `status_context.py --since
      <handoff date>` to catch anything new, and save the plan.
   3. Ask once whether to post it, then which subsessions to start.
+  4. Start the day's **learnings subsession** (`🔨 Journaling skill learnings · <Day
+     D>`). Lessons about this skill go there all day; it commits and pushes each
+     batch on the user's yes, and stays 🔨 until the user says to wrap up.
 
 ## Subsessions
 
 - Start each one **from the coordinator**, so it's a subsession of that day's
   coordinator, and file it in that day's group. Title: status emoji + short
   deliverable name with its ref (`⏳ api#12 retry backoff`).
+- **New work, new subsession.** Ask the user before reusing a session from another
+  day, or a top-level session, for today's work. The app can't re-parent a session,
+  so a reused one stays outside today's coordinator, and the user can't move it.
 - When `preferences.md` names a skill for this kind of work (review, implement,
   research…), the brief tells the subsession to invoke it.
 - A subsession only knows its brief, so every brief carries the approval gate,
@@ -53,6 +60,15 @@ user add the answer to that file.
   any other done item: in the next status update (`Follow-up filed: <what>
   repo#N`), in the plan's Next, and linked from its tracking issue
   (`Tracking issues` in `preferences.md`), on the user's yes.
+- **SQL for the user.** When a subsession needs the user to run a query, read the
+  file and tell the user in a few lines what it does and where it runs (dev or
+  prod). Flag any prod-side step that blocks the merge.
+- **Carried-over subsessions.** Today's coordinator messages them directly by
+  session id, never through the coordinator that started them. Every such message
+  asks the session to report back to today's coordinator by message: a session's
+  automatic turn-end notes reach only the session that started it. Older
+  coordinators stay read-only: message one only for context only it holds, or to
+  wrap up and archive.
 
 ## Status emoji
 
@@ -118,9 +134,9 @@ Write it at the end of the day, or first thing the next day if it was missed.
 2. **✅ sessions:** list them for archiving and archive on the user's yes.
 3. **⏳ and 🙋 sessions:** carry each into the next handoff, with what closes it.
    The next coordinator takes over tracking them, whichever coordinator started
-   them, so the user only follows today's coordinator. Older coordinators stay
-   open but read-only until their children close: archiving a parent also archives
-   its idle children that have no PR of their own.
+   them, so the user only follows today's coordinator ("Carried-over
+   subsessions"). Older coordinators stay open until their children close:
+   archiving a parent also archives its idle children that have no PR of their own.
 4. **Staleness** counts working days only; weekends don't count. Waiting on someone
    is fine. The day's age alone is no reason to nudge.
 5. **No reviewer, no movement.** A PR with no reviewer requested won't move by

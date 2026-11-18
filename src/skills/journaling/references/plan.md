@@ -14,6 +14,9 @@ Two steps: show a catch-up, then save once the user is happy with it.
      ask once: "What's today's priority?" Put the answer in a `⭐ Priority`
      section at the top of the plan, and mark that item's session ⭐
      (`references/workload.md`).
+   - **Teammates' new PRs.** "Review requested from me" misses PRs opened with no
+     reviewer requested. Also list open PRs opened since the last plan by the people
+     in `Review for:` (`context/preferences.md`), and put them in 🙋 On me as reviews.
    ```bash
    python3 $SKILL/scripts/generate_daily_plan.py                 # last 7 days of entries
    python3 $SKILL/scripts/generate_daily_plan.py --lookback 3 --context-file context/slack-C0123456789-2026-11-10-to-2026-11-11.txt
@@ -43,8 +46,11 @@ A saved plan is the text that gets posted, so it follows the status update's rul
 
 - **Only actions.** Sections `⭐ Priority` / `🙋 On me` / `⏳ Waiting on review` /
   `🔨 Next`, the same emoji as the session titles. Drop any that would be empty.
-- **Follow-ups are tasks.** Every follow-up issue filed since the last plan (while
-  merging, or split out of a review) goes in Next, linked.
+- **Audit Next.** Walk every open follow-up the user filed or is assigned (while
+  merging, or split out of a review), plus the open children of the tracking or
+  map issues (`preferences.md`), and add what's missing, linked. Order by the day's
+  priority first, then parallel fronts. Mark each blocker with an em dash:
+  `— waiting on an owner`, `— after repo#12 merges`.
 - **No history.** Earlier posts in the channel already carry what happened and why:
   no "where things stand", no recap of yesterday, no reasons, no counts.
 - **Nothing internal.** Session ids, workflow notes, archive lists and the
