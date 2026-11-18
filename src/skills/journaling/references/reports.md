@@ -11,18 +11,23 @@ stay in sync:
 | `team` | Highlights, heads-up / dependencies, coming up |
 | `qa` | Deliverables & changes, risks, suggested verification |
 
+A report is a draft like any post (`references/draft.md`): show it with `--stdout`,
+then save it on the user's yes.
+
 ```bash
-python3 $SKILL/scripts/generate_reports.py --from 2026-11-03 --to 2026-11-07
+python3 $SKILL/scripts/generate_reports.py --from 2026-11-03 --to 2026-11-07 --report-audience manager --stdout
+python3 $SKILL/scripts/generate_reports.py --from 2026-11-03 --to 2026-11-07   # save all four
 # → reports/report-{manager,self,team,qa}-2026-11-03-to-2026-11-07.md
+python3 $SKILL/scripts/generate_reports.py --from 2026-11-03 --to 2026-11-07 --report-audience manager --stdin <<'EOF'
+...the draft as the user edited it...
+EOF
 ```
 
 If the user didn't give a range, infer it ("last two weeks" → 14 days ending today)
-and state it in your reply rather than asking. `--report-audience X` writes just one.
+and state it in your reply rather than asking. `--report-audience X` handles just
+one. Saving refuses to overwrite a saved report unless you pass `--replace`.
 
 Reports only see journal entries. If the period has few entries, say so and offer a
 status update instead (it also uses GitHub).
 
-Posting: `post_slack_message.py --file reports/report-manager-….md [--channel-name team]`
-renders a `.slack.txt` sibling at post time (receipt = it was posted). One-line
-confirmation before posting, as with status updates. Unposted reports are `.md`
-files with no `.slack.txt` sibling.
+Posting a saved report: `references/post.md`.

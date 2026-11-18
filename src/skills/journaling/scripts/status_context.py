@@ -6,9 +6,10 @@ Prints a compact, model-friendly digest:
   2. GitHub activity for ``@me`` in that period (via the ``gh`` CLI, read-only):
      merged PRs, open PRs (draft / ready), PRs reviewed, issues closed, open issues
      assigned — each with title, ``owner/repo#N`` and URL.
-  3. PRs waiting on my review: open ones requesting me (any age), plus non-draft PRs
-     opened in the period by the GitHub logins in ``Review for:`` in
-     ``context/preferences.md`` (teammates often request no reviewer).
+  3. PRs waiting on my review: open ones requesting me (any age), non-draft PRs
+     opened in the period by the GitHub logins in ``Review for:``, and open non-draft
+     PRs I haven't reviewed in the ``Review repos:`` of ``context/preferences.md``
+     (teammates often request no reviewer).
   4. Journal entries (``entries/YYYY-MM-DD.md``) that fall inside the period.
 
 Period start (``--since auto``, the default):
@@ -41,6 +42,7 @@ GH_TIMEOUT_SECONDS = 30
 GH_LIMIT = 50
 _RECEIPT = re.compile(r"^status-(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})(\d{2})?Z\.slack\.txt$")
 _OWNER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}$")
+_REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}$")
 _ENTRY_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 _FIELDS = "number,title,url,repository,isDraft,updatedAt,closedAt"
 
@@ -214,8 +216,10 @@ def my_reviews(since: datetime, owners: list[str]) -> list[dict]:
     return sorted(out, key=lambda r: r["label"])
 
 
-def review_queue(since: datetime, owners: list[str], review_for: list[str]) -> list[dict]:
-    """Open PRs waiting on my review: requested from me, or new from people I review for."""
+def review_queue(since: datetime, owners: list[str], review_for: list[str],
+                 review_repos: list[str]) -> list[dict]:
+    """Open PRs waiting on my review: requested from me, new from people I review for,
+    or open in repos I help review and not reviewed by me yet."""
 
     if shutil.which("gh") is None:
         return []
@@ -229,6 +233,11 @@ def review_queue(since: datetime, owners: list[str], review_for: list[str]) -> l
         for it in _gh_search("prs", q) or []:
             if not it.get("isDraft"):
                 found.setdefault(str(it.get("url", "")), f"opened by @{login}")
+    for repo in review_repos:
+        q = ["--repo", repo, "--state", "open", "--", "-author:@me", "-reviewed-by:@me"]
+        for it in _gh_search("prs", q) or []:
+            if not it.get("isDraft"):
+                found.setdefault(str(it.get("url", "")), f"open in {repo}")
 
     statuses = fetch_statuses(found)
     out = []
@@ -285,7 +294,14 @@ def main() -> None:
             print(f"WARNING: 'Review for' wants GitHub logins; skipping {login!r}.", file=sys.stderr)
         elif login:
             review_for.append(login)
-    queue = None if args.no_github else review_queue(since, owners, review_for)
+    review_repos = []
+    for x in get_preference(repo, "Review repos").split(","):
+        name = x.strip()
+        if name and not _REPO.fullmatch(name):
+            print(f"WARNING: 'Review repos' wants owner/repo; skipping {name!r}.", file=sys.stderr)
+        elif name:
+            review_repos.append(name)
+    queue = None if args.no_github else review_queue(since, owners, review_for, review_repos)
     now = datetime.now().astimezone()
 
     if args.json:

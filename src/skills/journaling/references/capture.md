@@ -2,7 +2,7 @@
 
 Appends to `entries/YYYY-MM-DD.md` in the journaling home. Status updates read these
 entries, so a quick log line today makes tomorrow's update better. Posting a status
-update logs its Done, Blocked and Next lines here too (SKILL.md, Post flow).
+update logs its Done, Blocked and Next lines here too (`references/status-update.md`).
 
 ## Defaults — just do it
 

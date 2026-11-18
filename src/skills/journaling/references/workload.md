@@ -17,9 +17,11 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 - Tracking issues: https://github.com/acme/roadmap/issues/1
 - Ask about billing: Alice
 - Review for: alice, bob-gh
+- Review repos: acme/docs, acme/api
 ```
 
-`Review for` takes GitHub logins: the plan lists their new PRs as reviews.
+`Review for` takes GitHub logins and `Review repos` takes `owner/repo`: the plan
+suggests their open PRs as reviews (`references/plan.md`).
 
 When a choice depends on a preference that isn't there, ask once, and on the user's
 yes save the answer through the script. It finds the journaling home like the other
@@ -41,11 +43,8 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
 - **First steps:**
   1. Read today's `plans/handoff-YYYY-MM-DD.md` if there is one.
   2. Run the plan flow (`references/plan.md`) with `status_context.py --since
-     <handoff date>` to catch anything new, and save the plan.
-  3. Ask once whether to post it, then which subsessions to start.
-  4. Start the day's **learnings subsession** (`🔨 Journaling skill learnings · <Day
-     D>`). Lessons about this skill go there all day; it commits and pushes each
-     batch on the user's yes, and stays 🔨 until the user says to wrap up.
+     <handoff date>` to catch anything new, and show the plan as a draft.
+  3. Ask once whether to save and post it, then which subsessions to start.
 
 ## Subsessions
 
@@ -69,9 +68,10 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
   any other done item: in the next status update (`Follow-up filed: <what>
   repo#N`), in the plan's Next, and linked from its tracking issue
   (`Tracking issues` in `preferences.md`), on the user's yes.
-- **SQL for the user.** When a subsession needs the user to run a query, read the
-  file and tell the user in a few lines what it does and where it runs (dev or
-  prod). Flag any prod-side step that blocks the merge.
+- **Steps only the user can run.** When a subsession hands the user something to
+  run (a query, a migration, a console or dashboard action), read it and tell the
+  user in a few lines what it does and which environment it touches. Flag any
+  production step that blocks the merge.
 - **Carried-over subsessions.** Today's coordinator messages them directly by
   session id, never through the coordinator that started them. Every such message
   asks the session to report back to today's coordinator by message: a session's
@@ -92,7 +92,7 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
 | ⭐ | prefix for the day's priority (`⭐🔨 billing#80 webhooks`) |
 
 Change the emoji whenever the state changes, so the sidebar reads as the day's board.
-Status update sections use the same emoji (SKILL.md), so the post mirrors the sidebar.
+Status update sections use the same emoji (`references/status-update.md`), so the post mirrors the sidebar.
 
 ## Merging the user's PR with follow-ups
 

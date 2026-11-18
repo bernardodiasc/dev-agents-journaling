@@ -3,22 +3,75 @@
 A Claude Code skill that keeps a personal work log and turns it — plus your GitHub
 activity — into short, link-rich Slack status updates.
 
-```
-you:    draft status update
-claude: Since Mon 00:00 · 2 merged, 15 open PRs
-        ```
-        *Status update · Tue Nov 11*
+## A day with it
 
-        *✅ Done*
-        • Search API docs for the v2 endpoints https://github.com/acme/docs/pull/38
+Every post (plan, status update, report) is a draft first: you see it, say "save",
+and post it then or any time later. Times show how a day flows.
 
-        *🔨 In progress*
-        • Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 🟢 approved https://github.com/acme/billing/pull/81 🟡 in review
-        ```
-you:    post status update
-claude: (shows the text) Post to your channel?   you: yes
-claude: Posted — https://your-workspace.slack.com/archives/C0…/p…
-```
+````
+09:02 you:    start today's coordinator
+09:03 claude: Read yesterday's handoff and your journal channel since then.
+              Draft plan for Wed 18 Nov:
+              ```
+              # Plan · Wed 18 Nov
+              ## ⭐ Priority
+              - Ship the invoice export job https://github.com/acme/billing/issues/5
+              ## 🙋 On me
+              - Review Alice's search ranking fix https://github.com/acme/search/pull/14
+              - Review open docs PRs https://github.com/acme/docs/pull/40
+              ## 🔨 Next
+              - Cache invalidation for v2 (follow-up) https://github.com/acme/docs/issues/41
+              ```
+              Save and post to #my-updates?
+09:04 you:    yes
+09:04 claude: Saved plans/plan-2026-11-18.md · posted https://acme.slack.com/archives/C…/p…
+              Which subsessions should I start?
+09:05 you:    the export job and Alice's review
+09:05 claude: Started 🔨 billing#5 invoice export and 🔍 search#14 ranking fix.
+
+11:40 you:    pull #team since yesterday
+11:41 claude: Saved context/slack-team-2026-11-17-to-2026-11-18.txt. One thing for you:
+              Bob asked who owns the staging DB grants.
+11:42 you:    log that I'm blocked on staging DB grants from infra
+11:42 claude: Logged 1 blocker to entries/2026-11-18.md
+
+13:15 you:    sync the board
+13:16 claude: 🔍 search#14 → ✅ (you approved it). 🔨 billing#5 → ⏳ (PR open, review requested from Bob).
+
+16:30 you:    draft status update
+16:31 claude: Since Tue 17:10 · 1 merged, 3 open PRs, 2 reviews, 1 journal entry
+              ```
+              *Status update · Wed Nov 18*
+
+              *✅ Done*
+              • Invoice export job https://github.com/acme/billing/pull/82 🟣 merged
+
+              *🔍 Reviewed*
+              • Search ranking fix https://github.com/acme/search/pull/14 🟢 approved
+
+              *🚧 Blocked*
+              • Staging deploy — waiting on DB grants from infra
+              ```
+              Save it?
+16:32 you:    save, I'll post it later
+16:32 claude: Saved updates/draft.txt
+17:45 you:    post status update
+17:45 claude: (shows the saved draft) Post to #my-updates?   you: yes
+17:46 claude: Posted https://acme.slack.com/archives/C…/p… · logged 1 win, 1 blocker
+              to entries/2026-11-18.md
+
+18:00 you:    hand off to tomorrow
+18:01 claude: Wrote plans/handoff-2026-11-19.md: ✅ search#14 to archive, ⏳ billing#5
+              carried over, follow-up docs#41 in Next. Archive search#14?
+
+Fri 17:00 you:    manager report for this week
+Fri 17:01 claude: Mon 16 – Fri 20 Nov, from 5 journal entries:
+                  ```
+                  # Leadership update (2026-11-16 – 2026-11-20)
+                  Progress this period included: invoice export job, search ranking fix…
+                  ```
+                  Save it?
+````
 
 Every GitHub link gets a live status tag (🟢 approved, 🟡 in review, 🔴 changes
 requested, ⚪ draft, 🟣 merged/completed, 🔵 open + labels, 🟠 CI failing). Drafts use bare URLs so they
@@ -29,10 +82,10 @@ chips) with short `repo#123` links and no link previews.
 
 | Ask | Result |
 |---|---|
-| "draft status update" / "weekly update" | Slack-formatted update in a code block, built from `gh` activity + journal + chat |
-| "post status update" | One confirmation, then posts to your channel via your Slack bot |
+| "draft status update" / "weekly update" | Slack-formatted update in a code block, built from `gh` activity + journal + chat; saved on your yes |
+| "post status update" / "post the plan" | One confirmation, then posts the saved draft to your channel via your Slack bot |
 | "log that I merged #412" | Appends to `entries/YYYY-MM-DD.md` |
-| "plan my day" | Catch-up + suggested focus → `plans/` |
+| "plan my day" | Catch-up, including PRs waiting on your review → `plans/` |
 | "start today's coordinator" / "sync the board" / "hand off to tomorrow" | A daily coordinator session with one subsession per deliverable, status emoji on titles checked against GitHub, and a handoff → `plans/` |
 | "pull #team from yesterday" | Slack history → `context/` |
 | "manager report for last two weeks" | manager / self / team / qa reports → `reports/` |

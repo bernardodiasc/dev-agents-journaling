@@ -578,6 +578,21 @@ def main() -> None:
         help="Write all audiences together (default when --report-audience is omitted).",
     )
     parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Print the report(s) instead of writing them (a draft to show the user).",
+    )
+    parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Save the Markdown piped in (an edited draft) as the single audience's report.",
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Allow overwriting an existing report (refused by default).",
+    )
+    parser.add_argument(
         "--slack-user-id",
         default=None,
         help=(
@@ -602,6 +617,14 @@ def main() -> None:
             "ERROR: --output requires --report-audience (single-audience writes only).",
         )
 
+    if args.stdin and write_all:
+        sys.exit("ERROR: --stdin requires --report-audience (one report at a time).")
+    if args.stdin and args.stdout:
+        sys.exit("ERROR: --stdin and --stdout don't combine.")
+    piped = sys.stdin.read() if args.stdin else None
+    if piped is not None and not piped.strip():
+        sys.exit("ERROR: --stdin got no text.")
+
     repo = find_journaling_repo_root(Path(__file__))
     data = aggregate_report(repo, args.date_from, args.date_to)
 
@@ -619,9 +642,12 @@ def main() -> None:
         return None
 
     audiences = REPORT_AUDIENCES if write_all else (args.report_audience,)
-    written: list[Path] = []
+    planned: list[tuple[Path, str]] = []
     for audience in audiences:
-        body = render_report(data, args.format, audience, _resolve_uid(audience))
+        body = piped if piped is not None else render_report(data, args.format, audience, _resolve_uid(audience))
+        if args.stdout:
+            print(body.rstrip("\n") + "\n")
+            continue
         default_name = default_output_basename(
             args.date_from, args.date_to, audience, args.format,
         )
@@ -629,12 +655,14 @@ def main() -> None:
             out_path = resolve_write_path_under_repo(repo, args.output)
         else:
             out_path = repo / "reports" / default_name
+        planned.append((out_path, body))
+
+    existing = [str(p.relative_to(repo)) for p, _ in planned if p.exists()]
+    if existing and not args.replace:
+        sys.exit(f"ERROR: {', '.join(existing)} already saved; pass --replace to overwrite.")
+    for out_path, body in planned:
         atomic_write_text(out_path, body)
-        written.append(out_path)
-
-    for p in written:
-        print(f"Wrote {p.relative_to(repo)}")
-
+        print(f"Wrote {out_path.relative_to(repo)}")
 
 if __name__ == "__main__":
     main()

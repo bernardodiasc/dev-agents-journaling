@@ -1,6 +1,7 @@
 # Daily plan
 
-Two steps: show a catch-up, then save once the user is happy with it.
+A plan is a draft like any post (`references/draft.md`): catch up, show the plan,
+save it on the user's yes, post it now or later.
 
 1. **Catch-up** (no files written). Run without `--save`, and also consider running
    `status_context.py` for open PRs/issues — they are usually today's work.
@@ -15,15 +16,16 @@ Two steps: show a catch-up, then save once the user is happy with it.
      section at the top of the plan, and mark that item's session ⭐
      (`references/workload.md`).
    - **Reviews waiting on me.** `status_context.py` prints "PRs waiting on my
-     review": open PRs requesting the user, plus PRs opened in the period by the
-     GitHub logins in `Review for:` (`context/preferences.md`), since teammates
-     often request no reviewer. Each one goes in 🙋 On me as a review.
+     review": open PRs requesting the user, PRs opened in the period by the logins
+     in `Review for:`, and open PRs in the `Review repos:` the user hasn't reviewed
+     yet (`context/preferences.md`); teammates often request no reviewer. Suggest
+     each in 🙋 On me as a review; the user drops what isn't their concern.
    ```bash
    python3 $SKILL/scripts/generate_daily_plan.py                 # last 7 days of entries
    python3 $SKILL/scripts/generate_daily_plan.py --lookback 3 --context-file context/slack-C0123456789-2026-11-10-to-2026-11-11.txt
    ```
-   Reply with a short summary (done / outstanding / blocked) and 3–5 suggested focus
-   bullets. Ask "save it?" — one question, not a checklist.
+   Show the plan as a draft ("What a plan says" below), then ask the one question
+   from `references/draft.md`.
 2. **Save** on confirmation, always through the script:
    - the generated brief: same command plus `--save` → `plans/plan-YYYY-MM-DD.md`;
    - a plan you wrote (from a handoff, or edited with the user): pipe it in with
@@ -43,7 +45,7 @@ Two steps: show a catch-up, then save once the user is happy with it.
 ## What a plan says
 
 A saved plan is the text that gets posted, so it follows the status update's rules
-(`SKILL.md`): Slack mrkdwn, one line per item, outcome first, bare links at the end.
+(`references/status-update.md`): Slack mrkdwn, one line per item, outcome first, bare links at the end.
 
 - **Only actions.** Sections `⭐ Priority` / `🙋 On me` / `⏳ Waiting on review` /
   `🔨 Next`, the same emoji as the session titles. Drop any that would be empty.
@@ -91,9 +93,7 @@ installed path): a copy inside a worktree of this repo treats that worktree as h
 | `--date DAY` | Day the plan is for: `today` (default), `next` (next working day) or `YYYY-MM-DD` |
 | `--replace` | Allow overwriting an existing file (refused by default) |
 
-Posting a plan: `post_slack_message.py --file plans/plan-YYYY-MM-DD.md` renders a
-`.slack.txt` sibling at post time; that sibling is the receipt that it was posted.
-Same one-line confirmation as status updates before posting.
+Posting a saved plan: `references/post.md`.
 
 Running the day as a coordinator with subsessions, and the daily handoff:
 `references/workload.md`.
