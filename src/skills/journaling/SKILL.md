@@ -32,7 +32,7 @@ from any directory.
 | "post status update", "send it", "post that" | **Post** flow below |
 | "log/capture that I …" | Append to today's entry — see `references/capture.md` |
 | "plan my day", "plan tomorrow", "catch me up" | `references/plan.md` |
-| "start today's coordinator", "hand off to tomorrow", "conclude yesterday's sessions" | `references/workload.md` |
+| "start today's coordinator", "sync the board", "hand off to tomorrow", "conclude yesterday's sessions", "merge with follow-ups" | `references/workload.md` |
 | "pull #channel context", "save this ticket link" | `references/context.md` |
 | "report for the last two weeks", manager/team/qa report | `references/reports.md` |
 | Setup, tokens, channels, errors | `references/setup.md` |
@@ -87,21 +87,25 @@ Draft (what you write):
 ```
 *Status update · Thu Nov 12*
 
-*Done*
+*✅ Done*
 • Search API docs for the v2 endpoints https://github.com/acme/docs/pull/38
+• Follow-up filed: cache invalidation for v2 https://github.com/acme/docs/issues/41
 
-*In progress*
+*🔨 In progress*
 • Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 https://github.com/acme/billing/pull/81
+
+*⏳ Waiting on review*
 • Per-service database users https://github.com/acme/infra/pull/79
 
-*Reviewed*
+*🙋 Next*
+• Answer Alice's review on the export job https://github.com/acme/billing/pull/77
+• Cache invalidation for v2 https://github.com/acme/docs/issues/41
+
+*🔍 Reviewed*
 • Search ranking fixes https://github.com/acme/search/pull/12 https://github.com/acme/search/pull/14
 • Dependency security bumps https://github.com/acme/web/pull/301 https://github.com/acme/api/pull/77
 
-*Next*
-• Invoice export job https://github.com/acme/billing/issues/5
-
-*Blocked*
+*🚧 Blocked*
 • Staging deploy — waiting on DB grants from infra
 ```
 
@@ -114,9 +118,20 @@ After `status_render.py` (what the user sees and pastes):
 
 Why it looks like this, so you can handle cases the example doesn't cover:
 
-- **Sections**: `Done` / `In progress` / `Reviewed` / `Next` / `Blocked`, in that
-  order. Drop any section that would be empty — an empty "Blocked: none" is noise.
-- **Reviewed**: others' PRs you reviewed in the period, grouped by theme or repo
+- **Sections** mirror the sidebar's session emoji (`references/workload.md`):
+  `✅ Done` / `🔨 In progress` / `⏳ Waiting on review` / `🙋 Next` / `🔍 Reviewed` /
+  `🚧 Blocked`, in that order. Drop any section that would be empty — an empty
+  "Blocked: none" is noise.
+- **Only what changed since the last post.** Readers already have the earlier posts
+  in the channel. An item goes in only if it is new or its state moved since then
+  (merged, approved, new change requests, newly filed). A PR still waiting with no
+  new review stays out.
+- **Follow-ups are done work.** An issue filed while merging, or split out of a
+  review, goes in Done as `Follow-up filed: <what> repo#N`, and its work goes in
+  Next (and in the plan's Next).
+- **Review threads with change requests** on the user's PRs go in Next: answering
+  them is the user's next action.
+- **🔍 Reviewed**: others' PRs you reviewed in the period, grouped by theme or repo
   (≤ 3 links per line, one short clause: "Dependency security bumps"). Reviews are
   real work readers care about — include them whenever the digest has any.
 - **One line per item, outcome first.** Rewrite PR titles as what changed for the
@@ -191,6 +206,16 @@ These hold in every flow and every subsession, without the user repeating them.
   yes: Slack posts, PR and issue comments, reviews, reviewer requests, label or issue
   edits, ready-for-review, pushes. Show the exact text or diff and its target, ask
   once, act on yes. Each yes covers that one action.
+- **Approvals don't travel between sessions.** A yes given in one session (say the
+  coordinator) doesn't authorize a push, reply or post in another, and that
+  session's permission checks may block it anyway. Tell the user which session is
+  waiting and ask them to approve it there. Never redo the blocked step yourself
+  from the session that got the yes.
+- **Repo rules win.** Before setting a label, status, assignee or milestone on an
+  issue or PR, read the repo's own contributor or issue-tracker doc
+  (`CONTRIBUTING.md`, `docs/`, `AGENTS.md`). Some repos forbid agents from setting
+  status labels (a `status: approved` label, say). When the doc says so, leave it to
+  the user and say which label they need to set.
 - **The user runs data queries.** For warehouse or database questions, write
   aggregate-only SQL (counts and sums, no row-level personal data) for the user to
   run, and work from the output they paste. Credentials stay where they are: read

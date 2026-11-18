@@ -28,7 +28,6 @@ DEFAULT_TOKEN_VAR = "JOURNALING_SLACK_BOT_TOKEN"
 HTTP_TIMEOUT_SECONDS = 15
 MAX_LIMIT = 200
 DEFAULT_LIMIT = 50
-_MAX_MSG_TEXT_CHARS = 500
 
 
 def fetch_history(token: str, channel: str, limit: int, oldest: float | None) -> list[dict]:
@@ -52,18 +51,21 @@ def fetch_history(token: str, channel: str, limit: int, oldest: float | None) ->
     return data.get("messages", [])
 
 
-def format_text(messages: list[dict]) -> str:
+def format_text(messages: list[dict], max_chars: int = 0) -> str:
+    """Chronological ``[time] <@author>: text`` lines; ``max_chars`` > 0 truncates."""
+
     lines = []
     for msg in reversed(messages):  # chronological order
         ts = float(msg.get("ts", 0))
         dt = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         author = msg.get("user") or msg.get("bot_id") or "unknown"
+        bot = " (bot)" if msg.get("bot_id") else ""  # the skill's own earlier posts
         text = msg.get("text", "").strip()
         if not text:
             continue
-        if len(text) > _MAX_MSG_TEXT_CHARS:
-            text = text[:_MAX_MSG_TEXT_CHARS - 3] + "..."
-        lines.append(f"[{dt}] <@{author}>: {text}")
+        if max_chars > 0 and len(text) > max_chars:
+            text = text[:max_chars - 3] + "..."
+        lines.append(f"[{dt}] <@{author}>{bot}: {text}")
     return "\n".join(lines)
 
 
@@ -142,6 +144,13 @@ def main() -> None:
         help="Output format (default: text)",
     )
     parser.add_argument(
+        "--max-chars",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Truncate each message to N characters in text output (default: 0, full text)",
+    )
+    parser.add_argument(
         "--token-var",
         default=DEFAULT_TOKEN_VAR,
         help="Env var for bot token (SLACK_* or JOURNALING_SLACK_BOT_TOKEN)",
@@ -209,7 +218,7 @@ def main() -> None:
     if args.format == "json":
         output = json.dumps(messages, indent=2)
     else:
-        output = format_text(messages)
+        output = format_text(messages, args.max_chars)
         if not output:
             output = "(no messages found)"
 

@@ -4,7 +4,7 @@ Slack uses **mrkdwn**, not GitHub Markdown.
 
 | Intent | Use | Not |
 |---|---|---|
-| Bold / section title | `*Done*` on its own line | `**Done**`, `## Done` |
+| Bold / section title | `*✅ Done*` on its own line | `**Done**`, `## Done` |
 | Italic | `_text_` | `*text*` (that's bold) |
 | Strike | `~text~` | `~~text~~` |
 | Bullet | `• item` (or `- item`) | nested `*` bullets |
@@ -28,6 +28,11 @@ Appended after every GitHub URL from a live GraphQL lookup:
 | PR | Issue |
 |---|---|
 | 🟢 approved · 🟡 in review · 🔴 changes requested · ⚪ draft · 🟣 merged · ⚫ closed | 🔵 open · 🟣 completed · ⚫ not planned |
+
+Repos that don't require reviews report no review decision, so an approved PR
+there would read as in review. The script then decides from each reviewer's latest
+approving or change-requesting review: any change request → 🔴, else any
+approval → 🟢.
 
 Plus `🟠 CI failing` for open PRs with failing checks and up to 3 labels as `` `label` ``. Every status is a circle in GitHub's colors; states sharing a circle share one legend entry (`🟣 merged/completed`).
 Re-rendering strips old tags first, so statuses are always current at post time.

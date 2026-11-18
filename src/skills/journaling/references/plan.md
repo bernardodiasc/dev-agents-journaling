@@ -4,6 +4,16 @@ Two steps: show a catch-up, then save once the user is happy with it.
 
 1. **Catch-up** (no files written). Run without `--save`, and also consider running
    `status_context.py` for open PRs/issues — they are usually today's work.
+   - **Channel notes.** Read the user's own journal channel since the last saved
+     plan: `fetch_slack_messages.py --since <last plan date>` (full text by
+     default; `--format json` for the raw messages). Lines marked `(bot)` are this
+     skill's earlier posts. The rest are notes the user left for themselves
+     (direction, priorities, "drop X"): treat them as the user's input, the same
+     as something said in this conversation.
+   - **The day's priority.** If neither the user nor a channel note states one,
+     ask once: "What's today's priority?" Put the answer in a `⭐ Priority`
+     section at the top of the plan, and mark that item's session ⭐
+     (`references/workload.md`).
    ```bash
    python3 $SKILL/scripts/generate_daily_plan.py                 # last 7 days of entries
    python3 $SKILL/scripts/generate_daily_plan.py --lookback 3 --context-file context/slack-C0123456789-2026-11-10-to-2026-11-11.txt
@@ -31,8 +41,10 @@ Two steps: show a catch-up, then save once the user is happy with it.
 A saved plan is the text that gets posted, so it follows the status update's rules
 (`SKILL.md`): Slack mrkdwn, one line per item, outcome first, bare links at the end.
 
-- **Only actions.** Sections `🙋 On me` / `⏳ Waiting on review` / `🔨 Next`, the
-  same emoji as the session titles. Drop any that would be empty.
+- **Only actions.** Sections `⭐ Priority` / `🙋 On me` / `⏳ Waiting on review` /
+  `🔨 Next`, the same emoji as the session titles. Drop any that would be empty.
+- **Follow-ups are tasks.** Every follow-up issue filed since the last plan (while
+  merging, or split out of a review) goes in Next, linked.
 - **No history.** Earlier posts in the channel already carry what happened and why:
   no "where things stand", no recap of yesterday, no reasons, no counts.
 - **Nothing internal.** Session ids, workflow notes, archive lists and the
@@ -44,6 +56,9 @@ A saved plan is the text that gets posted, so it follows the status update's rul
 ```markdown
 # Plan · Tue 17 Nov
 
+## ⭐ Priority
+- Ship the invoice export job https://github.com/acme/billing/issues/5
+
 ## 🙋 On me
 - Answer review on the billing agents https://github.com/acme/agents/pull/12 https://github.com/acme/agents/pull/13
 - Search ranking brief review https://github.com/acme/docs/pull/89
@@ -52,7 +67,7 @@ A saved plan is the text that gets posted, so it follows the status update's rul
 - https://github.com/acme/billing/pull/76 https://github.com/acme/billing/pull/36
 
 ## 🔨 Next
-- Invoice export job https://github.com/acme/billing/issues/5
+- Cache invalidation for v2 (follow-up) https://github.com/acme/docs/issues/41
 ```
 
 The script resolves the journaling home itself, which may be a different checkout

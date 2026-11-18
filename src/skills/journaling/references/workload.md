@@ -41,20 +41,73 @@ user add the answer to that file.
   deliverable name with its ref (`⏳ api#12 retry backoff`).
 - When `preferences.md` names a skill for this kind of work (review, implement,
   research…), the brief tells the subsession to invoke it.
-- A subsession only knows its brief, so every brief carries the approval gate
-  and masking rules from SKILL.md's Security notes in one line each.
+- A subsession only knows its brief, so every brief carries the approval gate,
+  masking and repo-rules lines from SKILL.md's Security notes in one line each.
 - When a subsession reports, update its title emoji and the plan.
+- **Approvals stay in their session.** When the user says yes in the coordinator
+  to something a subsession does (a push, a reply, a merge), that yes doesn't reach
+  the subsession, and its permission checks may block the step. Say so, and point
+  the user to that session to approve it there. Never redo the blocked step from
+  the coordinator.
+- **Follow-ups count.** When a subsession files a follow-up issue, record it like
+  any other done item: in the next status update (`Follow-up filed: <what>
+  repo#N`), in the plan's Next, and linked from its tracking issue
+  (`Tracking issues` in `preferences.md`), on the user's yes.
 
 ## Status emoji
 
 | Emoji | Meaning |
 |---|---|
 | 📓 | coordinator |
+| 🔨 | in progress: the subsession is working |
+| 🔍 | reviewing someone else's PR |
 | ✅ | done: nothing left but archiving |
 | ⏳ | waiting on others (review, a reply, a deploy) |
-| 🙋 | needs the user (a decision, a query to run, a credential to fix) |
+| 🙋 | needs the user (a decision, a query to run, a credential to fix, a reviewer to pick) |
+| ⭐ | prefix for the day's priority (`⭐🔨 billing#80 webhooks`) |
 
 Change the emoji whenever the state changes, so the sidebar reads as the day's board.
+Status update sections use the same emoji (SKILL.md), so the post mirrors the sidebar.
+
+## Merging the user's PR with follow-ups
+
+When the user's own PR is approved but still has open suggestions or questions,
+it can merge without blocking on them:
+
+1. Read every open review thread. If one is a real blocker (a bug, a security
+   issue, the reviewer asked not to merge), stop and tell the user.
+2. Put the rest in one follow-up issue, or reuse one the reviewer already opened.
+3. Reply in each thread with a link to that issue, then resolve the thread (branch
+   rules may require resolved threads before merging).
+4. Comment on the PR: `Merging with follow-ups in #N`.
+5. Squash-merge.
+6. Record the follow-up: status update (`Follow-up filed: <what> repo#N`), the
+   plan's Next, and a link from its tracking issue if `preferences.md` names one.
+
+Each of steps 2–5 is outward-facing: show the issue text, replies and comment,
+and get the user's yes once for the batch before acting. Set no labels on the new
+issue unless the repo's docs allow agents to (SKILL.md, "Repo rules win").
+
+## Syncing the board
+
+"Sync the board" (or "where are we?") brings every session's emoji in line with
+reality:
+
+1. For every open session in today's group and the ones carried over: read its
+   title and its last report.
+2. Check each claim against live GitHub (`gh pr view <url> --json
+   state,reviewDecision,reviewRequests,latestReviews`). Sessions report what they
+   believe; a report saying "Alice was asked to review" means nothing if
+   `reviewRequests` is empty.
+3. Set the emoji from what GitHub says. An open PR with no requested reviewer is
+   🙋 (the user picks one), not ⏳.
+4. Append a dated `## Sync · HH:MM` section to today's handoff: one line per
+   session whose emoji changed, and any report that didn't match GitHub.
+   ```bash
+   python3 $SKILL/scripts/generate_daily_plan.py --stdin --replace --output plans/handoff-2026-11-17.md <<'EOF'
+   ...the existing handoff, plus the new section...
+   EOF
+   ```
 
 ## Daily handoff
 
@@ -70,10 +123,13 @@ Write it at the end of the day, or first thing the next day if it was missed.
    its idle children that have no PR of their own.
 4. **Staleness** counts working days only; weekends don't count. Waiting on someone
    is fine. The day's age alone is no reason to nudge.
-5. **No reviewer, no movement.** A ⏳ PR with no reviewer requested won't move by
-   waiting (`gh pr view <url> --json reviewRequests`). Requesting one is a coordinator
-   action, on the user's yes. It isn't a nudge.
-6. **Save** through the script (see `references/plan.md`), dated for the day it's for.
+5. **No reviewer, no movement.** A PR with no reviewer requested won't move by
+   waiting (`gh pr view <url> --json reviewRequests`), so it's 🙋, not ⏳.
+   Requesting one is a coordinator action, on the user's yes. It isn't a nudge.
+6. **Follow-ups.** List every follow-up issue filed today. Check each one is in the
+   next plan's Next and linked from its tracking issue (`preferences.md`); fix
+   either on the user's yes.
+7. **Save** through the script (see `references/plan.md`), dated for the day it's for.
    The handoff is internal: session ids, tracking tables, archive lists. If the user
    also wants the next day's plan ready, save it as a separate file with only the
    actions ("What a plan says" in `references/plan.md`). That plan is what gets posted.
@@ -101,8 +157,11 @@ _From the Mon 16 Nov coordinator. Internal: gitignored `plans/`, never copy into
 | Session | State | What closes it |
 |---|---|---|
 | ✅ api#12 retry backoff | done | Archive on your yes |
-| ⏳ billing#80 webhooks | waiting | Bob's review. **No reviewer requested yet.** |
+| 🙋 billing#80 webhooks | needs you | **No reviewer requested yet.** Pick one (Bob?) |
 | 🙋 infra#79 DB users | needs you | Run `counts.sql`, paste the output |
+
+## Follow-ups filed today
+- https://github.com/acme/docs/issues/41 cache invalidation, from docs#38's review. In the plan's Next; linked from roadmap#1
 
 ## Unblocked work
 - https://github.com/acme/billing/issues/5 invoice export, no blocker

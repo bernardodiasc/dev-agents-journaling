@@ -30,6 +30,7 @@ GITHUB_URL = re.compile(
 _FIELDS = """
   __typename
   ... on PullRequest { number title author { login } isDraft merged state reviewDecision
+      latestOpinionatedReviews(first: 20) { nodes { state } }
       repository { name } labels(first: 3) { nodes { name } }
       commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } }
   ... on Issue { number title author { login } state stateReason repository { name } labels(first: 3) { nodes { name } } }
@@ -88,16 +89,36 @@ def _meta(node: dict) -> dict:
             "author": str((node.get("author") or {}).get("login") or "")}
 
 
+def _review_decision(node: dict) -> str | None:
+    """``reviewDecision``, or one derived from the latest reviews when it's null.
+
+    Repos that don't require reviews report ``reviewDecision: null`` even after an
+    approval, which would tag an approved PR "in review". Each reviewer's latest
+    opinionated review decides: any change request wins, else any approval.
+    """
+
+    decision = node.get("reviewDecision")
+    if decision:
+        return decision
+    states = {n.get("state") for n in (node.get("latestOpinionatedReviews") or {}).get("nodes") or []}
+    if "CHANGES_REQUESTED" in states:
+        return "CHANGES_REQUESTED"
+    if "APPROVED" in states:
+        return "APPROVED"
+    return None
+
+
 def _pr_status(node: dict, label: str) -> ItemStatus:
+    decision = _review_decision(node)
     if node.get("merged"):
         emoji, state = "🟣", "merged"
     elif node.get("state") == "CLOSED":
         emoji, state = "⚫", "closed"
     elif node.get("isDraft"):
         emoji, state = "⚪", "draft"
-    elif node.get("reviewDecision") == "APPROVED":
+    elif decision == "APPROVED":
         emoji, state = "🟢", "approved"
-    elif node.get("reviewDecision") == "CHANGES_REQUESTED":
+    elif decision == "CHANGES_REQUESTED":
         emoji, state = "🔴", "changes requested"
     else:
         emoji, state = "🟡", "in review"

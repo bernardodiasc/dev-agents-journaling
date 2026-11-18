@@ -9,10 +9,10 @@ claude: Since Mon 00:00 · 2 merged, 15 open PRs
         ```
         *Status update · Tue Nov 11*
 
-        *Done*
+        *✅ Done*
         • Search API docs for the v2 endpoints https://github.com/acme/docs/pull/38
 
-        *In progress*
+        *🔨 In progress*
         • Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/80 🟢 approved https://github.com/acme/billing/pull/81 🟡 in review
         ```
 you:    post status update
@@ -33,7 +33,7 @@ chips) with short `repo#123` links and no link previews.
 | "post status update" | One confirmation, then posts to your channel via your Slack bot |
 | "log that I merged #412" | Appends to `entries/YYYY-MM-DD.md` |
 | "plan my day" | Catch-up + suggested focus → `plans/` |
-| "start today's coordinator" / "hand off to tomorrow" | A daily coordinator session with one subsession per deliverable, status emoji on titles, and a handoff → `plans/` |
+| "start today's coordinator" / "sync the board" / "hand off to tomorrow" | A daily coordinator session with one subsession per deliverable, status emoji on titles checked against GitHub, and a handoff → `plans/` |
 | "pull #team from yesterday" | Slack history → `context/` |
 | "manager report for last two weeks" | manager / self / team / qa reports → `reports/` |
 
