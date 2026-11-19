@@ -10,14 +10,17 @@ Prints a compact, model-friendly digest:
      opened in the period by the GitHub logins in ``Review for:``, and open non-draft
      PRs I haven't reviewed in the ``Review repos:`` of ``context/preferences.md``
      (teammates often request no reviewer).
-  4. Journal entries (``entries/YYYY-MM-DD.md``) that fall inside the period.
+  4. With ``--notifications``: unread GitHub notifications, split into "on me"
+     (review requests, re-reviews, mentions, assignments, my threads) and "watching"
+     (subscribed activity, answered requests), with repos outside the owners flagged.
+  5. Journal entries (``entries/YYYY-MM-DD.md``) that fall inside the period.
 
 Period start (``--since auto``, the default):
   - the timestamp of the newest ``updates/status-*.slack.txt`` (last posted update), else
   - the start of the last working day (Friday when today is Monday).
 
 Nothing is written; nothing is posted. ``gh`` is invoked with an argument list (no
-shell), a timeout, and only ``search`` subcommands.
+shell), a timeout, and only read-only ``search`` and ``api`` GET calls.
 """
 
 from __future__ import annotations
@@ -36,6 +39,7 @@ from _shared.journaling_repo import find_journaling_repo_root
 from _shared.path_guard import read_text_limited
 from _shared.script_utils import load_optional_install_config
 from github_status import canonical, fetch_statuses
+from notifications import fetch_my_review_states, fetch_threads, html_url, notification_digest
 from preferences import get_preference
 
 GH_TIMEOUT_SECONDS = 30
@@ -249,6 +253,17 @@ def review_queue(since: datetime, owners: list[str], review_for: list[str],
     return sorted(out, key=lambda r: r["label"])
 
 
+def notifications(owners: list[str]) -> dict | str:
+    threads = fetch_threads()
+    if threads is None:
+        return "gh api notifications failed (not authenticated? run `gh auth status`) — skipped."
+    login = str((_gh_json(["api", "user", "--jq", "{login: .login}"]) or {}).get("login", ""))
+    requested = [u for t in threads if t.get("reason") == "review_requested"
+                 for u in [html_url((t.get("subject") or {}).get("url"))] if u]
+    mine = fetch_my_review_states(requested, login) if re.fullmatch(r"[A-Za-z0-9-]{1,39}", login) else {}
+    return notification_digest(threads, owners, mine)
+
+
 # --------------------------------------------------------------------------- journal
 
 def journal_entries(repo: Path, since: datetime) -> list[tuple[str, str]]:
@@ -270,6 +285,8 @@ def main() -> None:
     ap.add_argument("--owner", action="append", default=None,
                     help="Limit GitHub to this org/user (repeatable). Default: JOURNALING_GITHUB_OWNERS.")
     ap.add_argument("--no-github", action="store_true", help="Skip GitHub activity.")
+    ap.add_argument("--notifications", action="store_true",
+                    help="Add unread GitHub notifications (morning catch-up).")
     ap.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
     args = ap.parse_args()
 
@@ -302,12 +319,14 @@ def main() -> None:
         elif name:
             review_repos.append(name)
     queue = None if args.no_github else review_queue(since, owners, review_for, review_repos)
+    notes = notifications(owners) if args.notifications and not args.no_github else None
     now = datetime.now().astimezone()
 
     if args.json:
         print(json.dumps({
             "since": since.isoformat(), "until": now.isoformat(), "since_reason": reason,
             "owners": owners, "github": gh, "reviews": reviews, "review_queue": queue,
+            "notifications": notes,
             "journal": [{"date": d, "text": t} for d, t in entries],
         }, indent=2))
         return
@@ -342,6 +361,17 @@ def main() -> None:
         for r in queue:
             print(f"- {r['title']} [{r['why']}] [PR: {r['status']}] — @{r['author']} — {r['label']} — {r['url']}")
         print()
+    if notes is not None:
+        if isinstance(notes, str):
+            print(f"## GitHub notifications: {notes}\n")
+        else:
+            print(f"## GitHub notifications (unread): {len(notes['on_me'])} on me, {len(notes['watching'])} watching")
+            for key, label in (("on_me", "On me"), ("watching", "Watching")):
+                print(f"### {label}")
+                for n in notes[key]:
+                    flag = f" [other org: {n['repo'].split('/')[0]}]" if n["other_org"] else ""
+                    print(f"- {n['title']} [{n['why']}]{flag} — {n['repo']} — {n['url'] or '(no link)'}")
+            print()
     print(f"## Journal entries in period: {len(entries)}")
     for d, text in entries:
         print(f"\n### entries/{d}.md\n{text}")

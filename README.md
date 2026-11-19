@@ -9,8 +9,11 @@ Every post (plan, status update, report) is a draft first: you see it, say "save
 and post it then or any time later. Times show how a day flows.
 
 ````
-09:02 you:    start today's coordinator
-09:03 claude: Read yesterday's handoff and your journal channel since then.
+09:02 you:    journaling, let's get started: catch me up and draft today's plan
+09:03 claude: Read yesterday's handoff, your journal channel, today's context notes
+              and unread GitHub notifications (1 re-review on you).
+              Open sessions: ✅ api#12 retry backoff (merged) → archive;
+              ⏳ billing#80 webhooks → carry over, Bob is reviewing.
               Draft plan for Wed 18 Nov:
               ```
               # Plan · Wed 18 Nov
@@ -22,12 +25,11 @@ and post it then or any time later. Times show how a day flows.
               ## 🔨 Next
               - Cache invalidation for v2 (follow-up) https://github.com/acme/docs/issues/41
               ```
-              Save and post to #my-updates?
+              Archive api#12, save and post to #my-updates, and start
+              🔨 billing#5 invoice export and 🔍 search#14 ranking fix?
 09:04 you:    yes
-09:04 claude: Saved plans/plan-2026-11-18.md · posted https://acme.slack.com/archives/C…/p…
-              Which subsessions should I start?
-09:05 you:    the export job and Alice's review
-09:05 claude: Started 🔨 billing#5 invoice export and 🔍 search#14 ranking fix.
+09:05 claude: Archived api#12 · saved plans/plan-2026-11-18.md · posted
+              https://acme.slack.com/archives/C…/p… · started both subsessions.
 
 11:40 you:    pull #team since yesterday
 11:41 claude: Saved context/slack-team-2026-11-17-to-2026-11-18.txt. One thing for you:
@@ -115,8 +117,9 @@ Cursor / project-level use: `bash scripts/sync-vendor-dirs.sh` symlinks
 - Secrets only in `.env` (gitignored) or env vars; `.env` is read from the journaling
   home only — never searched for in parent directories.
 - Network: fixed `https://slack.com/api/` endpoints (`chat.postMessage`,
-  `chat.getPermalink`, `conversations.history`) and read-only `gh search` /
-  `gh api graphql` (PR/issue status, URLs passed as variables).
+  `chat.getPermalink`, `conversations.history`) and read-only `gh search`,
+  `gh api graphql` (PR/issue status, URLs passed as variables) and `gh api` GETs
+  (unread notifications, review state of PRs that request you).
 - File arguments are confined to the journaling home; scripts never print tokens or
   raw API responses.
 - Nothing goes out (Slack posts, PR/issue comments, reviews, pushes) without showing

@@ -12,8 +12,13 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 
 ```markdown
 # Journaling preferences (gitignored; never commit)
+- Sidebar group: Journaling
 - Review skill: code-review
 - Implement skill: tdd
+- Research skill: research
+- Debug skill: diagnosing-bugs
+- Design skill: grilling, domain-modeling
+- Skill-writing skill: writing-for-agents
 - Tracking issues: https://github.com/acme/roadmap/issues/1
 - Ask about billing: Alice
 - Review for: alice, bob-gh
@@ -21,7 +26,9 @@ and holds what differs per user. Use those values; the skill hardcodes none of t
 ```
 
 `Review for` takes GitHub logins and `Review repos` takes `owner/repo`: the plan
-suggests their open PRs as reviews (`references/plan.md`).
+suggests their open PRs as reviews (`references/plan.md`). `<Kind> skill` keys
+name the skill a subsession invokes for that kind of work ("Subsessions"); plugin
+skills keep their prefix (`my-plugin:tdd`).
 
 When a choice depends on a preference that isn't there, ask once, and on the user's
 yes save the answer through the script. It finds the journaling home like the other
@@ -36,20 +43,29 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
 ## The coordinator
 
 - **One per day.** Title `📓 Journaling · <Day D Mon>` (`📓 Journaling · Mon 16 Nov`).
-  File it in a sidebar group named `<Day D Mon>`, creating the group if it's missing.
+  File it in the sidebar group named by `Sidebar group` in `preferences.md` (one
+  group for every day); without that key, a group per day named `<Day D Mon>`.
+  Create the group if it's missing.
 - **Delegates every deliverable.** Anything that ends in a PR, review, issue comment
   or doc change starts as a subsession. The coordinator's own output is the plan,
   the handoff, session titles, questions to the user, and Slack posts.
-- **First steps:**
-  1. Read today's `plans/handoff-YYYY-MM-DD.md` if there is one.
-  2. Run the plan flow (`references/plan.md`) with `status_context.py --since
-     <handoff date>` to catch anything new, and show the plan as a draft.
-  3. Ask once whether to save and post it, then which subsessions to start.
+- **First steps** ("let's get started, catch me up and draft today's plan" means all
+  of them):
+  1. **Handoff.** Read the newest `plans/handoff-*.md` dated today or earlier. A
+     missed evening leaves only yesterday's; it still holds the carry-over.
+  2. **Open sessions.** Walk the open (non-archived) `📓` coordinators from
+     earlier days and their subsessions, checked against GitHub as in "Syncing
+     the board" steps 1–3.
+     Propose each one as ✅ archive, carry over (⏳, with what closes it) or 🙋.
+  3. **Plan.** Run the plan flow (`references/plan.md`) with `status_context.py
+     --since <handoff date> --notifications`, and show the plan as a draft.
+  4. **Ask once** for the batch: archive the ✅ list, save and post the plan,
+     start the named subsessions. Each item listed; the yes covers those items.
 
 ## Subsessions
 
 - Start each one **from the coordinator**, so it's a subsession of that day's
-  coordinator, and file it in that day's group. Title: status emoji + short
+  coordinator, and file it in the coordinator's group. Title: status emoji + short
   deliverable name with its ref (`⏳ api#12 retry backoff`).
 - **New work, new subsession.** Ask the user before reusing a session from another
   day, or a top-level session, for today's work. The app can't re-parent a session,
@@ -60,8 +76,9 @@ python3 $SKILL/scripts/preferences.py --get "Review for"   # one value; no args 
   from GitHub, the handoff and the plan. Archiving stops a session and usually
   removes its worktree, so a reopened one has no checkout and stale state; its long
   transcript carries old assumptions GitHub has since replaced.
-- When `preferences.md` names a skill for this kind of work (review, implement,
-  research…), the brief tells the subsession to invoke it.
+- **Skills.** Match the deliverable to a `<Kind> skill` key in `preferences.md`
+  (Review, Implement, Research, Debug, Design, Skill-writing) and name that skill
+  in the brief, telling the subsession to invoke it.
 - A subsession only knows its brief, so every brief carries the approval gate,
   masking and repo-rules lines from SKILL.md's Security notes in one line each.
 - When a subsession reports, update its title emoji and the plan.
@@ -124,7 +141,7 @@ issue unless the repo's docs allow agents to (SKILL.md, "Repo rules win").
 "Sync the board" (or "where are we?") brings every session's emoji in line with
 reality:
 
-1. For every open session in today's group and the ones carried over: read its
+1. For every open session of today's coordinator and the ones carried over: read its
    title and its last report. Open sessions only: `list_sessions` leaves archived
    ones out by default, so keep it that way.
 2. Check each claim against live GitHub (`gh pr view <url> --json
@@ -145,7 +162,7 @@ reality:
 
 Write it at the end of the day, or first thing the next day if it was missed.
 
-1. **Walk** every open subsession in the day's group (archived ones are out, as in
+1. **Walk** every open subsession of the day's coordinator (archived ones are out, as in
    "Syncing the board"). Record each one's state, emoji and what closes it.
 2. **✅ sessions:** list them for archiving and archive on the user's yes.
 3. **⏳ and 🙋 sessions:** carry each into the next handoff, with what closes it.
