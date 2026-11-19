@@ -2,6 +2,33 @@
 
 Slack uses **mrkdwn**, not GitHub Markdown.
 
+## Writing a post
+
+Every post this skill sends (status update, plan, report, any message to Slack)
+follows these line rules; each post type adds only its own sections.
+
+- **One line per item, outcome first.** Rewrite PR titles as what changed for the
+  reader ("Per-service database users"), not how ("Give each service its own…").
+  Strip ticket prefixes like `[#669]:`. No "I", no adjectives, no why — the PR has the why.
+- **Group related work, but keep lines short.** Several PRs for one feature become
+  one line — at most ~3 links per line and roughly one short clause of text. If a
+  group needs more, split it into two lines by sub-theme rather than chaining "X, Y
+  and Z" plus five URLs. Never merge unrelated work into one line just to save
+  lines. Aim for ≤ 8 lines total; readers skim, and a 300-character line with five
+  URLs reads as noise.
+- **State**: GitHub items get their state from the script's tags, so don't repeat
+  "— in review" / "— draft" in the text. Use an em dash only for state GitHub can't
+  know: `— waiting on DB grants from infra`.
+- **Links at the end of the line, bare URLs** in drafts. Slack's message box doesn't
+  render `<url|label>` when pasted, but auto-links bare URLs. When the bot posts, the
+  script rewrites GitHub URLs to short `repo#123` / `repo@abc1234` labels — so never
+  hand-write `<url|label>` in the draft.
+- **Slack mrkdwn**: `*bold*` (single asterisks), `_italic_`, `•` bullets; no `#`
+  headings, `**` or `[text](url)` (Syntax below). Plans and reports are `.md` files
+  converted at post time ("Markdown files → Slack"), so they keep `#` headings.
+
+## Syntax
+
 | Intent | Use | Not |
 |---|---|---|
 | Bold / section title | `*✅ Done*` on its own line | `**Done**`, `## Done` |

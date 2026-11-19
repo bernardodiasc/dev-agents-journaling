@@ -37,13 +37,7 @@ save it on the user's yes, post it now or later.
 2. **Save** on confirmation, always through the script:
    - the generated brief: same command plus `--save` → `plans/plan-YYYY-MM-DD.md`;
    - a plan you wrote (from a handoff, or edited with the user): pipe it in with
-     `--stdin --save`.
-   ```bash
-   python3 $SKILL/scripts/generate_daily_plan.py --stdin --save <<'EOF'
-   # Plan · Mon 16 Nov
-   ...
-   EOF
-   ```
+     `--stdin --save`, tagged first ("What a plan says" below).
    Planning ahead ("plan tomorrow", the evening before): add `--date next` (the
    next working day, so Friday plans Monday) or `--date YYYY-MM-DD`. Without it the
    file is dated by the local clock, which is still the earlier day. Saving never
@@ -52,11 +46,16 @@ save it on the user's yes, post it now or later.
 
 ## What a plan says
 
-A saved plan is the text that gets posted, so it follows the status update's rules
-(`references/status-update.md`): Slack mrkdwn, one line per item, outcome first, bare links at the end.
+A saved plan is the text that gets posted. Its lines follow the status update's
+post rules (`references/slack-format.md` → Writing a post): one line per item, outcome
+first, ≤ ~3 bare links at the end, state from the script's tags. Only the sections
+and what goes in them differ:
 
 - **Only actions.** Sections `⭐ Priority` / `🙋 On me` / `⏳ Waiting on review` /
   `🔨 Next`, the same emoji as the session titles. Drop any that would be empty.
+- **🙋 starts with the action**: `Answer review on`, `Re-review`, `Review`,
+  `Decide`. Add an em dash for what GitHub can't show: `— my review was dismissed`.
+- **⏳ one line per feature**, like any other section: what it is, then its links.
 - **Audit Next.** Walk every open follow-up the user filed or is assigned (while
   merging, or split out of a review), plus the open children of the tracking or
   map issues (`preferences.md`), and add what's missing, linked. Mark each blocker
@@ -70,21 +69,31 @@ A saved plan is the text that gets posted, so it follows the status update's rul
 - **Nothing internal.** Session ids, workflow notes, archive lists and the
   coordinator's tracking tables go in `plans/handoff-YYYY-MM-DD.md`
   (`references/workload.md`), never in the plan.
-- **Waiting items** collapse into one line of links. Their state is already in the
-  channel.
+
+Tag it before showing and before saving, so every link carries its live state
+(`🟢 approved`, `🔴 changes requested`, `🟠 CI failing`…). Re-tagging refreshes old
+tags instead of doubling them, so re-run it on a plan saved the evening before:
+
+```bash
+python3 $SKILL/scripts/status_render.py --no-save < draft.md \
+  | python3 $SKILL/scripts/generate_daily_plan.py --stdin --save
+```
+
+Draft (what you write; the tags come from the script):
 
 ```markdown
 # Plan · Tue 17 Nov
 
 ## ⭐ Priority
-- Ship the invoice export job https://github.com/acme/billing/issues/5
+- Invoice export job https://github.com/acme/billing/issues/5
 
 ## 🙋 On me
 - Answer review on the billing agents https://github.com/acme/agents/pull/12 https://github.com/acme/agents/pull/13
-- Search ranking brief review https://github.com/acme/docs/pull/89
+- Re-review search ranking brief https://github.com/acme/docs/pull/89 — my review was dismissed
 
 ## ⏳ Waiting on review
-- https://github.com/acme/billing/pull/76 https://github.com/acme/billing/pull/36
+- Per-service database users https://github.com/acme/infra/pull/79
+- Billing webhooks (retries, idempotency) https://github.com/acme/billing/pull/76 https://github.com/acme/billing/pull/36
 
 ## 🔨 Next
 - Cache invalidation for v2 (follow-up) https://github.com/acme/docs/issues/41

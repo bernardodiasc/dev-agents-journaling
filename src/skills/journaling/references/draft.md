@@ -2,7 +2,8 @@
 
 Every post (status update, plan, report) goes **draft → save → post**. What a kind
 contains and how it's built lives in its own file: `references/status-update.md`,
-`references/plan.md`, `references/reports.md`. This file is the part they share.
+`references/plan.md`, `references/reports.md`. This file is the part they share;
+how every post's lines read is in `references/slack-format.md` → Writing a post.
 
 1. **Draft.** Build it by the kind's rules and show it, nothing written yet:
    - one line: the period and sources it was built from,

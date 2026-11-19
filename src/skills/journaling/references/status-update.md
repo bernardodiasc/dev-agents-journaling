@@ -81,7 +81,8 @@ After `status_render.py` (what the user sees and pastes):
 • Invoice export job https://github.com/acme/billing/issues/5 🔵 open `billing` `q4`
 ```
 
-Why it looks like this, so you can handle cases the example doesn't cover:
+Every line follows the post rules in `references/slack-format.md` (one line per item,
+outcome first, ≤ ~3 bare links, state from tags, mrkdwn). Specific to status updates:
 
 - **Sections** mirror the sidebar's session emoji (`references/workload.md`):
   `✅ Done` / `🔨 In progress` / `⏳ Waiting on review` / `🙋 Next` / `🔍 Reviewed` /
@@ -99,26 +100,8 @@ Why it looks like this, so you can handle cases the example doesn't cover:
 - **🔍 Reviewed**: others' PRs you reviewed in the period, grouped by theme or repo
   (≤ 3 links per line, one short clause: "Dependency security bumps"). Reviews are
   real work readers care about — include them whenever the digest has any.
-- **One line per item, outcome first.** Rewrite PR titles as what changed for the
-  reader ("Per-service database users"), not how ("Give each service its own…").
-  Strip ticket prefixes like `[#669]:`. No "I", no adjectives, no why — the PR has the why.
-- **Group related work, but keep lines short.** Several PRs for one feature become
-  one line — at most ~3 links per line and roughly one short clause of text. If a
-  group needs more, split it into two lines by sub-theme rather than chaining "X, Y
-  and Z" plus five URLs. Never merge unrelated work into one line just to save
-  lines. Aim for ≤ 8 lines total; readers skim, and a 300-character line with five
-  URLs reads as noise.
-- **State**: GitHub items get their state from the script's tags, so don't repeat
-  "— in review" / "— draft" in the text. Use an em dash only for state GitHub can't
-  know: `— waiting on DB grants from infra`.
-- **Links at the end of the line, bare URLs** in drafts. Slack's message box doesn't
-  render `<url|label>` when pasted, but auto-links bare URLs. When the bot posts, the
-  script rewrites GitHub URLs to short `repo#123` / `repo@abc1234` labels — so never
-  hand-write `<url|label>` in the draft.
 - **Context paragraph**: allowed when the user asks for one (or for a single-topic
   update that needs framing) — 1–3 sentences right after the header.
-- **Slack mrkdwn only**: `*bold*` (single asterisks), `_italic_`, `•` bullets. No
-  `#` headings, no `**`, no `[text](url)`. Details in `references/slack-format.md`.
 - **Header**: `*Status update · <Day Mon D>*` (or `*Weekly update · Nov 3–7*` for a
   week). No intro or sign-off lines.
 
